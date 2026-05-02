@@ -28,9 +28,19 @@ html, body {
     width: 420mm;
     height: 297mm;
   }
-  .no-print { display: none !important; }
+  .no-print, .no-export { display: none !important; }
   .spread { page-break-inside: avoid; }
 }
+
+/* Drag & drop affordances */
+body.dragging-layout [data-zone],
+body.dragging-content [data-zone] {
+  outline: 1px dashed rgba(255, 255, 255, 0.1);
+  outline-offset: -2px;
+}
+
+/* Hide UI overlays during canvas-to-image export */
+body.exporting .no-export { display: none !important; }
 
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }

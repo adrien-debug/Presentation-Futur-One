@@ -2,6 +2,7 @@
 
 import React from "react";
 import { ArtDirection } from "@/design-system";
+import { F } from "@/utils/cqb";
 
 interface HeaderProps {
   theme: ArtDirection;
@@ -14,9 +15,7 @@ interface HeaderProps {
 }
 
 export default function Header({
-  theme,
-  side,
-  showGrid = false,
+  theme, side, showGrid = false,
   projectName = "FUTUR ONE",
   tagline = "DataCenter · Qatar 2030",
   version = "v2.0",
@@ -26,20 +25,17 @@ export default function Header({
 
   return (
     <div
-      className="w-full h-full flex items-center justify-between px-3 relative"
-      style={{
-        borderBottom: `1px solid ${theme.colors.border}`,
-        backgroundColor: theme.colors.surface,
-      }}
+      className="w-full h-full flex items-center justify-between relative"
+      style={{ padding: "0 4cqb", borderBottom: `1px solid ${theme.colors.border}`, backgroundColor: theme.colors.surface }}
     >
-      {/* LEFT SIDE */}
       {isLeft ? (
         <>
-          {/* Logo / Project name */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center" style={{ gap: "4cqb" }}>
             <div
-              className="w-6 h-6 flex items-center justify-center text-[10px] font-bold"
+              className="flex items-center justify-center font-black flex-shrink-0"
               style={{
+                width: "6cqb", height: "6cqb",
+                fontSize: F.xs,
                 backgroundColor: theme.colors.accent,
                 color: theme.colors.background,
               }}
@@ -47,72 +43,46 @@ export default function Header({
               F1
             </div>
             <div>
-              <div
-                className="text-[11px] font-bold tracking-widest uppercase"
-                style={{
-                  color: theme.colors.text,
-                  fontFamily: theme.typography.headingFont,
-                  letterSpacing: "0.15em",
-                }}
-              >
+              <div className="font-bold tracking-widest uppercase" style={{ fontSize: F.lead, color: theme.colors.text, fontFamily: theme.typography.headingFont, letterSpacing: "0.12em" }}>
                 {projectName}
               </div>
-              <div
-                className="text-[7px] tracking-wider uppercase"
-                style={{ color: theme.colors.textMuted, letterSpacing: "0.1em" }}
-              >
+              <div className="tracking-wider uppercase" style={{ fontSize: F.xs, color: theme.colors.textMuted }}>
                 {tagline}
               </div>
             </div>
           </div>
 
-          {/* Right side of header — left page */}
-          <div className="flex items-center gap-4">
-            <HeaderPill theme={theme} label="TIER IV" />
-            <HeaderPill theme={theme} label="99.9999%" accent />
-            <div
-              className="text-[7px] font-mono"
-              style={{ color: theme.colors.textMuted }}
-            >
+          <div className="flex items-center" style={{ gap: "3cqb" }}>
+            <Pill theme={theme} label="TIER IV" />
+            <Pill theme={theme} label="99.9999%" accent />
+            <div className="font-mono" style={{ fontSize: F.micro, color: theme.colors.textMuted }}>
               {version} · {date}
             </div>
           </div>
         </>
       ) : (
         <>
-          {/* Right page header — mirror */}
-          <div className="flex items-center gap-4">
-            <div
-              className="text-[7px] font-mono"
-              style={{ color: theme.colors.textMuted }}
-            >
+          <div className="flex items-center" style={{ gap: "3cqb" }}>
+            <div className="font-mono" style={{ fontSize: F.micro, color: theme.colors.textMuted }}>
               {date} · {version}
             </div>
-            <HeaderPill theme={theme} label="CONFIDENTIAL" />
+            <Pill theme={theme} label="CONFIDENTIAL" />
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center" style={{ gap: "4cqb" }}>
             <div className="text-right">
-              <div
-                className="text-[11px] font-bold tracking-widest uppercase"
-                style={{
-                  color: theme.colors.text,
-                  fontFamily: theme.typography.headingFont,
-                  letterSpacing: "0.15em",
-                }}
-              >
+              <div className="font-bold tracking-widest uppercase" style={{ fontSize: F.lead, color: theme.colors.text, fontFamily: theme.typography.headingFont, letterSpacing: "0.12em" }}>
                 {projectName}
               </div>
-              <div
-                className="text-[7px] tracking-wider uppercase"
-                style={{ color: theme.colors.textMuted }}
-              >
+              <div className="tracking-wider uppercase" style={{ fontSize: F.xs, color: theme.colors.textMuted }}>
                 Infrastructure Document
               </div>
             </div>
             <div
-              className="w-6 h-6 flex items-center justify-center text-[10px] font-bold"
+              className="flex items-center justify-center font-black flex-shrink-0"
               style={{
+                width: "6cqb", height: "6cqb",
+                fontSize: F.xs,
                 backgroundColor: theme.colors.accent,
                 color: theme.colors.background,
               }}
@@ -123,12 +93,8 @@ export default function Header({
         </>
       )}
 
-      {/* Zone debug label */}
       {showGrid && (
-        <div
-          className="absolute inset-0 flex items-end justify-center pb-0.5 pointer-events-none"
-          style={{ color: `${theme.colors.accent}55`, fontSize: "7px", fontFamily: "monospace" }}
-        >
+        <div className="absolute inset-0 flex items-end justify-center pointer-events-none" style={{ paddingBottom: "1cqb", color: `${theme.colors.accent}55`, fontSize: F.micro, fontFamily: "monospace" }}>
           HEADER
         </div>
       )}
@@ -136,15 +102,13 @@ export default function Header({
   );
 }
 
-function HeaderPill({ theme, label, accent = false }: {
-  theme: ArtDirection;
-  label: string;
-  accent?: boolean;
-}) {
+function Pill({ theme, label, accent = false }: { theme: ArtDirection; label: string; accent?: boolean }) {
   return (
     <div
-      className="px-2 py-0.5 text-[7px] font-mono tracking-wider uppercase"
+      className="font-mono tracking-wider uppercase"
       style={{
+        padding: "1cqb 2cqb",
+        fontSize: F.micro,
         border: `1px solid ${accent ? theme.colors.accent : theme.colors.border}`,
         color: accent ? theme.colors.accent : theme.colors.textMuted,
         backgroundColor: accent ? `${theme.colors.accent}15` : "transparent",

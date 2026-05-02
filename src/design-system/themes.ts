@@ -8,7 +8,8 @@ export type ThemeId =
   | "quantum-blue"
   | "emerald-vision"
   | "sunset-desert"
-  | "platinum-edge";
+  | "platinum-edge"
+  | "hearst-corporation";
 
 export interface ColorPalette {
   primary: string;
@@ -573,6 +574,57 @@ export const themes: Record<ThemeId, ArtDirection> = {
       highlight: "text-white",
       headerBg: "bg-[#0D0D0D]",
       footerBg: "bg-[#080808]",
+    },
+  },
+
+  "hearst-corporation": {
+    id: "hearst-corporation",
+    name: "Hearst Corporation",
+    tagline: "Mining institutionnel, infrastructure durable, vision éditoriale",
+    colors: {
+      primary: "#FFFFFF",
+      secondary: "#FCFDFC",
+      accent: "#426439",
+      background: "#FFFFFF",
+      surface: "#FCFDFC",
+      surfaceAlt: "#F6FEF3",
+      text: "#000000",
+      textMuted: "#5C605C",
+      border: "#E6F1E7",
+      highlight: "#A7FB90",
+      cmyk: { primary: "C:0 M:0 Y:0 K:0", secondary: "C:1 M:0 Y:1 K:1", accent: "C:62 M:25 Y:88 K:39" },
+    },
+    typography: {
+      headingFont: "'Inter', 'FK Grotesk', sans-serif",
+      bodyFont: "'Inter', 'FK Grotesk', sans-serif",
+      monoFont: "'IBM Plex Mono', monospace",
+      heroSize: "clamp(48px, 6.5vw, 104px)",
+      titleSize: "clamp(24px, 3.2vw, 52px)",
+      subtitleSize: "clamp(14px, 1.8vw, 24px)",
+      bodySize: "clamp(10px, 1.2vw, 14px)",
+      captionSize: "clamp(8px, 0.9vw, 11px)",
+      headingWeight: "500",
+      letterSpacing: "-0.025em",
+    },
+    photoStyle: "Photographie éditoriale clean, panneaux solaires, hardware mining, lumière naturelle, ratios mixtes",
+    graphicStyle: "Whitespace généreux, grille fluide, typographie comme architecture, micro-illustrations dotted",
+    iconography: "SVG monoline noir, tracé fin uniforme, géométrie simple",
+    boxStyle: "Cartes blanches, border-radius 1rem, bordure rgba(0,0,0,.15) 1px, ombre soft",
+    titleStyle: "Inter Medium, letter-spacing -0.025em, casse normale, noir sur blanc",
+    dividerStyle: "Filet 1px rgba(0,0,0,.15), respiration verticale large",
+    dataVizStyle: "Barres mint-green #A7FB90 sur blanc, libellés noir, grille minimale",
+    globalTone: "Éditorial corporate clean-tech, institutionnel scandinave, confiance souriante",
+    tailwind: {
+      bg: "bg-white",
+      bgSurface: "bg-[#FCFDFC]",
+      bgSurfaceAlt: "bg-[#F6FEF3]",
+      text: "text-[#000000]",
+      textMuted: "text-[#5C605C]",
+      accent: "text-[#426439]",
+      border: "border-[#E6F1E7]",
+      highlight: "text-[#324B2B]",
+      headerBg: "bg-white",
+      footerBg: "bg-[#000000]",
     },
   },
 };

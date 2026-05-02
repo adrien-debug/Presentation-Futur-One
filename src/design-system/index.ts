@@ -1,7 +1,11 @@
 export * from "./themes";
 
+// Reserved fixed zone IDs. Sections use dynamic strings (uuid-based) so they can be added/reordered.
+export type ReservedZoneId = "header" | "footer";
+export type ZoneId = ReservedZoneId | (string & {}); // allow any string at runtime, keep autocomplete
+
 export interface SectionZone {
-  id: "header" | "section-1" | "section-2" | "section-3" | "section-4" | "section-5" | "section-6" | "footer";
+  id: string;
   label: string;
   heightRatio: number;
 }
