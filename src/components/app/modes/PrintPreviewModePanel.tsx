@@ -23,15 +23,15 @@ export default function PrintPreviewModePanel({ theme, onExport }: Props) {
       </Section>
 
       <Section title="Marges & sécurité" accent={accent}>
-        <Row label="Bleed"          value="3 mm" />
-        <Row label="Safe area"      value="10 mm" />
-        <Row label="Margin centrale" value="2.5 %" />
+        <Row label="Fond perdu"     value="3 mm" />
+        <Row label="Zone sûre"      value="10 mm" />
+        <Row label="Marge centrale" value="2,5 %" />
       </Section>
 
       <Section title="Résolution" accent={accent}>
-        <Row label="Print"   value="300 DPI" />
-        <Row label="Preview" value="150 DPI" />
-        <Row label="Couleur" value="RGB → CMYK auto" />
+        <Row label="Impression" value="300 DPI" />
+        <Row label="Aperçu"     value="150 DPI" />
+        <Row label="Couleur"    value="RGB → CMYK auto" />
       </Section>
 
       <button

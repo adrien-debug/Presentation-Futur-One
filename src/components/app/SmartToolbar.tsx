@@ -86,8 +86,8 @@ export default function SmartToolbar(props: SmartToolbarProps) {
 }
 
 const MODE_TITLES: Record<AppMode, string> = {
-  "layout":         "Layout",
-  "design-system":  "Design System",
-  "assets":         "Assets",
-  "print-preview":  "Print Preview",
+  "layout":         "Maquette",
+  "design-system":  "Style",
+  "assets":         "Médias",
+  "print-preview":  "Impression",
 };

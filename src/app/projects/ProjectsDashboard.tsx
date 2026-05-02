@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import type { Project } from "@/db/schema";
 import { IconPlus, IconClose, IconLayout, IconChevronRight } from "@/components/ui/Icon";
+import ConfirmDialog from "@/components/ui/ConfirmDialog";
 
 interface Props {
   projects: Project[];
@@ -15,9 +16,16 @@ export default function ProjectsDashboard({ projects: initial, userEmail }: Prop
   const router = useRouter();
   const [projects, setProjects] = useState(initial);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; name: string } | null>(null);
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Supprimer "${name}" ? Cette action est irréversible.`)) return;
+  const requestDelete = (id: string, name: string) => {
+    setPendingDelete({ id, name });
+  };
+
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    const { id } = pendingDelete;
+    setPendingDelete(null);
     setDeletingId(id);
     await fetch(`/api/projects/${id}`, { method: "DELETE" });
     setProjects((prev) => prev.filter((p) => p.id !== id));
@@ -124,7 +132,7 @@ export default function ProjectsDashboard({ projects: initial, userEmail }: Prop
                   key={p.id}
                   project={p}
                   onOpen={() => router.push(`/projects/${p.id}`)}
-                  onDelete={() => handleDelete(p.id, p.name)}
+                  onDelete={() => requestDelete(p.id, p.name)}
                   deleting={deletingId === p.id}
                 />
               ))}
@@ -153,6 +161,21 @@ export default function ProjectsDashboard({ projects: initial, userEmail }: Prop
           FUTUR ONE © 2025 · DataCenter Infrastructure · Qatar
         </p>
       </footer>
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        title="Supprimer ce projet ?"
+        message={
+          <>
+            Le projet <strong style={{ color: "var(--fg-primary)" }}>« {pendingDelete?.name} »</strong> sera définitivement supprimé. Cette action est irréversible.
+          </>
+        }
+        confirmLabel="Supprimer"
+        cancelLabel="Annuler"
+        variant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
     </div>
   );
 }
