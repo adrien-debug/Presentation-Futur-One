@@ -1,44 +1,140 @@
 @import "tailwindcss";
 
-/* Print-ready base settings */
-*, *::before, *::after {
-  box-sizing: border-box;
-}
+/* ─── Reset / Base ────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
 
 :root {
-  --page-width: 420mm;
-  --page-height: 297mm;
-  --bleed: 3mm;
-  --margin-safe: 10mm;
+  --page-width:   420mm;
+  --page-height:  297mm;
+  --bleed:        3mm;
+  --margin-safe:  10mm;
+
+  /* Surfaces */
+  --bg-app:       #05080F;
+  --bg-panel:     #0A1018;
+  --bg-elevated:  #0F1721;
+  --bg-subtle:    #08101A;   /* slightly raised over bg-app — section headers, cards */
+  --bg-input:     #0A0E1A;   /* form input fields */
+
+  /* Borders */
+  --border-subtle:#131C28;
+  --border-strong:#1F2A3A;
+
+  /* Foreground */
+  --fg-primary:   #E8F4FF;
+  --fg-secondary: #6B8FAA;
+  --fg-muted:     #5B7F9E;   /* bumped from #3D6080 for WCAG AA on bg-app (~4.5:1) */
+  --fg-deep:      #3D6080;   /* legacy "deep muted" — only for decorative copy */
+
+  /* Brand & semantic */
+  --accent:       #00D4FF;
+  --bg-on-accent: #05080F;   /* readable text/glyph color on top of --accent */
+  --danger:       #E07070;
+  --danger-bg:    #3A1A1A;
+
+  /* Spacing scale (4-px base) */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  24px;
+  --space-6:  32px;
+  --space-7:  48px;
+  --space-8:  64px;
 }
 
 html, body {
   margin: 0;
   padding: 0;
-  background: #1a1a1a;
-  /* Satoshi Variable for all UI chrome — spread content overrides with theme fonts */
+  width: 100%;
+  max-width: 100%;
+  height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: hidden;
+  background: var(--bg-app);
+  color: var(--fg-primary);
   font-family: 'Satoshi', 'Inter', 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* Override: spread content uses theme-defined fonts, not Satoshi */
-.spread-wrapper * {
-  font-family: inherit;
+#__next, body > div { height: 100dvh; }
+
+/* ─── App shell — no global scroll, fullscreen ───────────────────────────── */
+.app-shell {
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  grid-template-columns: 1fr min(360px, 28vw);
+  grid-template-areas:
+    "topbar    topbar"
+    "canvas    panel";
+  background: var(--bg-app);
 }
 
-/* Print media query */
+.app-shell--no-panel {
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    "topbar"
+    "canvas";
+}
+
+.app-shell__topbar { grid-area: topbar; min-width: 0; }
+.app-shell__canvas { grid-area: canvas; min-width: 0; min-height: 0; }
+.app-shell__panel  { grid-area: panel;  min-width: 0; min-height: 0; }
+
+/* Narrow viewports — stack panel below canvas */
+@media (max-width: 900px) {
+  .app-shell {
+    grid-template-rows: auto 1fr auto;
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "topbar"
+      "canvas"
+      "panel";
+  }
+  .app-shell__panel { max-height: 40dvh; }
+}
+
+/* ─── Canvas stage ────────────────────────────────────────────────────────── */
+.canvas-stage {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(12px, 2vw, 32px);
+  background:
+    radial-gradient(ellipse at center, #0A1220 0%, #05080F 70%);
+  container-type: size;
+}
+
+.spread-wrapper {
+  transform-origin: center center;
+  max-width:  100%;
+  max-height: 100%;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+/* ─── Print media query (export) ──────────────────────────────────────────── */
 @media print {
   html, body {
     background: white;
-    width: 420mm;
+    width:  420mm;
     height: 297mm;
+    overflow: visible;
   }
   .no-print, .no-export { display: none !important; }
   .spread { page-break-inside: avoid; }
 }
 
-/* Drag & drop affordances */
+/* ─── Drag affordances ───────────────────────────────────────────────────── */
 body.dragging-layout [data-zone],
 body.dragging-content [data-zone] {
   outline: 1px dashed rgba(255, 255, 255, 0.1);
@@ -48,12 +144,66 @@ body.dragging-content [data-zone] {
 /* Hide UI overlays during canvas-to-image export */
 body.exporting .no-export { display: none !important; }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #111; }
-::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+/* ─── Scrollbar (only inside panels that allow scroll) ─────────────────────── */
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--fg-muted); }
 
-/* Transition utilities */
-.theme-transition {
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+.scroll-y { overflow-y: auto; overflow-x: hidden; }
+.scroll-x { overflow-x: auto; overflow-y: hidden; }
+
+/* ─── Focus visible (a11y) ────────────────────────────────────────────────── */
+/* Suppress default outline only when not keyboard-focused. Browsers that
+   support :focus-visible will still keep it for keyboard users. */
+:focus:not(:focus-visible) { outline: none; }
+
+/* Unified keyboard-focus ring across the app. Components can opt out by
+   declaring their own outline (which beats this rule via specificity if
+   placed on the element directly) or by adding the .no-focus-ring class. */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.no-focus-ring:focus-visible { outline: none; }
+
+/* ─── Sync indicator pulse ────────────────────────────────────────────────── */
+@keyframes futur-sync-pulse {
+  0%, 100% { opacity: 1;   transform: scale(1); }
+  50%      { opacity: 0.4; transform: scale(0.85); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ─── Touch-friendly affordances (mobile / coarse pointers) ────────────────── */
+/* Devices without :hover (touch screens) can't surface hover-only controls,
+   so anything wearing .touch-show is always visible there. */
+@media (hover: none) {
+  .touch-show {
+    opacity: 1 !important;
+  }
+}
+
+/* Bump tap-target dimensions to ≥44×44 px on coarse pointers (Apple HIG /
+   WCAG 2.5.5). Apply .touch-target to small icon buttons that need it. */
+@media (hover: none) and (pointer: coarse) {
+  .touch-target {
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
 }

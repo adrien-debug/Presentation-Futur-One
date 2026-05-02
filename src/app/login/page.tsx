@@ -38,21 +38,21 @@ export default function LoginPage() {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center"
-      style={{ backgroundColor: "#05080F", fontFamily: "'Inter', sans-serif" }}
+      style={{ backgroundColor: "var(--bg-app)", fontFamily: "'Inter', sans-serif" }}
     >
       {/* Logo */}
       <div className="flex items-center gap-3 mb-12">
         <div
           className="w-10 h-10 flex items-center justify-center text-[13px] font-black"
-          style={{ backgroundColor: "#00D4FF", color: "#05080F" }}
+          style={{ backgroundColor: "var(--accent)", color: "var(--bg-on-accent)" }}
         >
           F1
         </div>
         <div>
-          <div className="text-[13px] font-bold uppercase tracking-[0.18em]" style={{ color: "#E8F4FF" }}>
+          <div className="text-[13px] font-bold uppercase tracking-[0.18em]" style={{ color: "var(--fg-primary)" }}>
             FUTUR ONE
           </div>
-          <div className="text-[9px] font-mono mt-0.5" style={{ color: "#3D6080", letterSpacing: "0.1em" }}>
+          <div className="text-[9px] font-mono mt-0.5" style={{ color: "var(--fg-muted)", letterSpacing: "0.1em" }}>
             DataCenter · Design Tool
           </div>
         </div>
@@ -61,15 +61,15 @@ export default function LoginPage() {
       {/* Card */}
       <div
         className="w-full max-w-sm px-8 py-10 flex flex-col gap-6"
-        style={{ border: "1px solid #1A3A5C", backgroundColor: "#0F1929" }}
+        style={{ border: "1px solid var(--border-strong)", backgroundColor: "var(--bg-elevated)" }}
       >
         {!sent ? (
           <>
             <div>
-              <h1 className="text-[20px] font-bold mb-1" style={{ color: "#E8F4FF" }}>
+              <h1 className="text-[20px] font-bold mb-1" style={{ color: "var(--fg-primary)" }}>
                 Connexion
               </h1>
-              <p className="text-[11px]" style={{ color: "#6B8FAA" }}>
+              <p className="text-[11px]" style={{ color: "var(--fg-secondary)" }}>
                 Entrez votre email — un lien de connexion vous sera envoyé.
               </p>
             </div>
@@ -79,7 +79,7 @@ export default function LoginPage() {
                 <label
                   htmlFor="email"
                   className="text-[9px] font-mono uppercase"
-                  style={{ color: "#6B8FAA", letterSpacing: "0.14em" }}
+                  style={{ color: "var(--fg-secondary)", letterSpacing: "0.14em" }}
                 >
                   Email
                 </label>
@@ -93,18 +93,18 @@ export default function LoginPage() {
                   placeholder="vous@exemple.com"
                   className="px-3 py-2.5 text-[12px] font-mono outline-none transition-all"
                   style={{
-                    backgroundColor: "#0A0E1A",
-                    border: "1px solid #1A3A5C",
-                    color: "#E8F4FF",
-                    caretColor: "#00D4FF",
+                    backgroundColor: "var(--bg-input)",
+                    border: "1px solid var(--border-strong)",
+                    color: "var(--fg-primary)",
+                    caretColor: "var(--accent)",
                   }}
-                  onFocus={(e) => (e.currentTarget.style.borderColor = "#00D4FF")}
-                  onBlur={(e)  => (e.currentTarget.style.borderColor = "#1A3A5C")}
+                  onFocus={(e) => (e.currentTarget.style.borderColor = "var(--accent)")}
+                  onBlur={(e)  => (e.currentTarget.style.borderColor = "var(--border-strong)")}
                 />
               </div>
 
               {error && (
-                <p className="text-[10px]" style={{ color: "#E07070" }}>{error}</p>
+                <p className="text-[10px]" style={{ color: "var(--danger)" }} role="alert">{error}</p>
               )}
 
               <button
@@ -112,8 +112,8 @@ export default function LoginPage() {
                 disabled={pending || !email.trim()}
                 className="py-2.5 text-[10px] font-mono uppercase font-bold tracking-widest transition-all disabled:opacity-40"
                 style={{
-                  backgroundColor: "#00D4FF",
-                  color: "#05080F",
+                  backgroundColor: "var(--accent)",
+                  color: "var(--bg-on-accent)",
                   letterSpacing: "0.18em",
                 }}
               >
@@ -125,22 +125,26 @@ export default function LoginPage() {
           <div className="flex flex-col gap-4 items-center text-center py-4">
             <div
               className="w-12 h-12 flex items-center justify-center text-[20px]"
-              style={{ backgroundColor: "#00D4FF20", border: "1px solid #00D4FF40", color: "#00D4FF" }}
+              style={{
+                backgroundColor: "color-mix(in srgb, var(--accent) 12%, transparent)",
+                border: "1px solid color-mix(in srgb, var(--accent) 25%, transparent)",
+                color: "var(--accent)",
+              }}
             >
               ✓
             </div>
             <div>
-              <p className="text-[13px] font-bold mb-1" style={{ color: "#E8F4FF" }}>
+              <p className="text-[13px] font-bold mb-1" style={{ color: "var(--fg-primary)" }}>
                 Lien envoyé
               </p>
-              <p className="text-[11px]" style={{ color: "#6B8FAA" }}>
+              <p className="text-[11px]" style={{ color: "var(--fg-secondary)" }}>
                 Vérifiez votre boite mail ({email}) et cliquez sur le lien pour accéder à votre espace.
               </p>
             </div>
             <button
               onClick={() => { setSent(false); setEmail(""); }}
               className="text-[9px] font-mono uppercase mt-2"
-              style={{ color: "#6B8FAA", letterSpacing: "0.1em" }}
+              style={{ color: "var(--fg-secondary)", letterSpacing: "0.1em" }}
             >
               Changer d&apos;email
             </button>
@@ -148,7 +152,7 @@ export default function LoginPage() {
         )}
       </div>
 
-      <p className="mt-8 text-[8px] font-mono" style={{ color: "#2A4A60", letterSpacing: "0.1em" }}>
+      <p className="mt-8 text-[8px] font-mono" style={{ color: "var(--fg-deep)", letterSpacing: "0.1em" }}>
         FUTUR ONE © 2025 · DataCenter Infrastructure · Qatar
       </p>
     </div>

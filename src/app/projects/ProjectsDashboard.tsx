@@ -25,36 +25,35 @@ export default function ProjectsDashboard({ projects: initial, userEmail }: Prop
   };
 
   const SATOSHI = "'Satoshi', 'Inter', sans-serif";
-  const accent  = "#00D4FF";
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#05080F", color: "#E8F4FF", fontFamily: SATOSHI }}>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "var(--bg-app)", color: "var(--fg-primary)", fontFamily: SATOSHI }}>
 
       {/* ── TOPBAR ──────────────────────────────────────────────────────────── */}
       <header
         className="flex items-center justify-between px-8 py-4 border-b flex-shrink-0"
-        style={{ borderColor: "#131C28", backgroundColor: "#08101A" }}
+        style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-subtle)" }}
       >
         {/* Brand */}
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 flex items-center justify-center text-[11px] font-black" style={{ backgroundColor: accent, color: "#05080F" }}>
+          <div className="w-8 h-8 flex items-center justify-center text-[11px] font-black" style={{ backgroundColor: "var(--accent)", color: "var(--bg-on-accent)" }}>
             F1
           </div>
           <div>
             <div className="text-[12px] font-bold uppercase" style={{ letterSpacing: "0.16em" }}>FUTUR ONE</div>
-            <div className="text-[7px] font-mono" style={{ color: "#3D6080", letterSpacing: "0.1em" }}>DataCenter · Design Tool</div>
+            <div className="text-[7px] font-mono" style={{ color: "var(--fg-muted)", letterSpacing: "0.1em" }}>DataCenter · Design Tool</div>
           </div>
         </div>
 
         {/* User */}
         <div className="flex items-center gap-3">
-          <span className="text-[11px]" style={{ color: "#6B8FAA" }}>{userEmail}</span>
+          <span className="text-[11px]" style={{ color: "var(--fg-secondary)" }}>{userEmail}</span>
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
             className="text-[10px] font-medium px-3 py-1.5 transition-colors"
-            style={{ border: "1px solid #131C28", color: "#6B8FAA", letterSpacing: "0.06em" }}
-            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#E07070"; e.currentTarget.style.color = "#E07070"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#131C28"; e.currentTarget.style.color = "#6B8FAA"; }}
+            style={{ border: "1px solid var(--border-subtle)", color: "var(--fg-secondary)", letterSpacing: "0.06em" }}
+            onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--danger)"; e.currentTarget.style.color = "var(--danger)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-subtle)"; e.currentTarget.style.color = "var(--fg-secondary)"; }}
           >
             Déconnexion
           </button>
@@ -71,7 +70,7 @@ export default function ProjectsDashboard({ projects: initial, userEmail }: Prop
               <h1 className="text-[26px] font-bold" style={{ letterSpacing: "-0.025em" }}>
                 Mes projets
               </h1>
-              <p className="text-[12px] mt-1" style={{ color: "#6B8FAA" }}>
+              <p className="text-[12px] mt-1" style={{ color: "var(--fg-secondary)" }}>
                 {projects.length === 0
                   ? "Aucun projet pour l'instant"
                   : `${projects.length} projet${projects.length > 1 ? "s" : ""}`}
@@ -80,7 +79,7 @@ export default function ProjectsDashboard({ projects: initial, userEmail }: Prop
             <button
               onClick={() => router.push("/projects/new")}
               className="flex items-center gap-2 px-4 py-2.5 text-[11px] font-semibold transition-all"
-              style={{ backgroundColor: accent, color: "#05080F", letterSpacing: "0.06em" }}
+              style={{ backgroundColor: "var(--accent)", color: "var(--bg-on-accent)", letterSpacing: "0.06em" }}
               onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.85"; }}
               onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
             >
@@ -93,23 +92,23 @@ export default function ProjectsDashboard({ projects: initial, userEmail }: Prop
           {projects.length === 0 && (
             <div
               className="flex flex-col items-center justify-center py-24 gap-6"
-              style={{ border: "1px dashed #131C28" }}
+              style={{ border: "1px dashed var(--border-subtle)" }}
             >
-              <div style={{ color: "#1A3A5C" }}>
+              <div style={{ color: "var(--border-strong)" }}>
                 <IconLayout size={48} />
               </div>
               <div className="text-center">
-                <p className="text-[15px] font-semibold mb-1" style={{ color: "#E8F4FF" }}>
+                <p className="text-[15px] font-semibold mb-1" style={{ color: "var(--fg-primary)" }}>
                   Aucun projet
                 </p>
-                <p className="text-[12px]" style={{ color: "#6B8FAA" }}>
+                <p className="text-[12px]" style={{ color: "var(--fg-secondary)" }}>
                   Commence par choisir un modèle ou une page vide.
                 </p>
               </div>
               <button
                 onClick={() => router.push("/projects/new")}
                 className="flex items-center gap-2 px-5 py-2.5 text-[11px] font-semibold"
-                style={{ backgroundColor: accent, color: "#05080F" }}
+                style={{ backgroundColor: "var(--accent)", color: "var(--bg-on-accent)" }}
               >
                 <IconPlus size={13} />
                 Créer mon premier projet
@@ -127,7 +126,6 @@ export default function ProjectsDashboard({ projects: initial, userEmail }: Prop
                   onOpen={() => router.push(`/projects/${p.id}`)}
                   onDelete={() => handleDelete(p.id, p.name)}
                   deleting={deletingId === p.id}
-                  accent={accent}
                 />
               ))}
 
@@ -135,9 +133,9 @@ export default function ProjectsDashboard({ projects: initial, userEmail }: Prop
               <button
                 onClick={() => router.push("/projects/new")}
                 className="flex flex-col items-center justify-center gap-2 transition-all min-h-[180px]"
-                style={{ border: `1px dashed #131C28`, color: "#3D6080" }}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${accent}50`; e.currentTarget.style.color = accent; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#131C28"; e.currentTarget.style.color = "#3D6080"; }}
+                style={{ border: `1px dashed var(--border-subtle)`, color: "var(--fg-muted)" }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--accent) 50%, transparent)"; e.currentTarget.style.color = "var(--accent)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-subtle)"; e.currentTarget.style.color = "var(--fg-muted)"; }}
               >
                 <IconPlus size={18} />
                 <span className="text-[10px] font-medium uppercase" style={{ letterSpacing: "0.1em" }}>
@@ -150,8 +148,8 @@ export default function ProjectsDashboard({ projects: initial, userEmail }: Prop
       </main>
 
       {/* ── FOOTER ──────────────────────────────────────────────────────────── */}
-      <footer className="px-8 py-4 border-t" style={{ borderColor: "#131C28" }}>
-        <p className="text-[9px] font-mono" style={{ color: "#1A3A5C", letterSpacing: "0.1em" }}>
+      <footer className="px-8 py-4 border-t" style={{ borderColor: "var(--border-subtle)" }}>
+        <p className="text-[9px] font-mono" style={{ color: "var(--fg-deep)", letterSpacing: "0.1em" }}>
           FUTUR ONE © 2025 · DataCenter Infrastructure · Qatar
         </p>
       </footer>
@@ -162,35 +160,34 @@ export default function ProjectsDashboard({ projects: initial, userEmail }: Prop
 // ─── Project card ──────────────────────────────────────────────────────────────
 
 function ProjectCard({
-  project, onOpen, onDelete, deleting, accent,
+  project, onOpen, onDelete, deleting,
 }: {
   project: Project;
   onOpen: () => void;
   onDelete: () => void;
   deleting: boolean;
-  accent: string;
 }) {
   return (
     <div
       className="group relative flex flex-col cursor-pointer transition-all"
-      style={{ border: "1px solid #131C28", backgroundColor: "#08101A" }}
+      style={{ border: "1px solid var(--border-subtle)", backgroundColor: "var(--bg-subtle)" }}
       onClick={onOpen}
-      onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${accent}40`; }}
-      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#131C28"; }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "color-mix(in srgb, var(--accent) 40%, transparent)"; }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border-subtle)"; }}
     >
       {/* Preview */}
       <div
         className="w-full flex items-center justify-center relative"
-        style={{ height: 110, backgroundColor: "#060D14", borderBottom: "1px solid #131C28" }}
+        style={{ height: 110, backgroundColor: "var(--bg-app)", borderBottom: "1px solid var(--border-subtle)" }}
       >
         {/* Theme color strip */}
-        <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: `${accent}30` }} />
-        <IconLayout size={28} style={{ color: `${accent}25` }} />
+        <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: "color-mix(in srgb, var(--accent) 30%, transparent)" }} />
+        <IconLayout size={28} style={{ color: "color-mix(in srgb, var(--accent) 25%, transparent)" }} />
 
-        {/* Open arrow on hover */}
+        {/* Open arrow on hover (always visible on touch via .touch-show) */}
         <div
-          className="absolute right-3 top-3 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"
-          style={{ color: accent }}
+          className="absolute right-3 top-3 opacity-0 group-hover:opacity-100 touch-show transition-opacity flex items-center gap-1"
+          style={{ color: "var(--accent)" }}
         >
           <span className="text-[8px] font-medium uppercase" style={{ letterSpacing: "0.1em" }}>Ouvrir</span>
           <IconChevronRight size={11} />
@@ -200,15 +197,16 @@ function ProjectCard({
       {/* Info */}
       <div className="p-4 flex flex-col gap-1.5">
         <div className="flex items-start justify-between gap-2">
-          <p className="text-[13px] font-semibold leading-tight" style={{ color: "#E8F4FF" }}>
+          <p className="text-[13px] font-semibold leading-tight" style={{ color: "var(--fg-primary)" }}>
             {project.name}
           </p>
           <button
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
             disabled={deleting}
-            className="opacity-0 group-hover:opacity-100 transition-opacity w-5 h-5 flex items-center justify-center flex-shrink-0 disabled:opacity-40"
-            style={{ color: "#E07070" }}
+            className="opacity-0 group-hover:opacity-100 touch-show touch-target transition-opacity w-5 h-5 flex items-center justify-center flex-shrink-0 disabled:opacity-40"
+            style={{ color: "var(--danger)" }}
             title="Supprimer"
+            aria-label={`Supprimer le projet ${project.name}`}
           >
             <IconClose size={11} />
           </button>
@@ -217,11 +215,16 @@ function ProjectCard({
         <div className="flex items-center gap-2">
           <span
             className="text-[8px] font-mono uppercase px-1.5 py-0.5"
-            style={{ backgroundColor: `${accent}12`, color: accent, border: `1px solid ${accent}25`, letterSpacing: "0.1em" }}
+            style={{
+              backgroundColor: "color-mix(in srgb, var(--accent) 12%, transparent)",
+              color: "var(--accent)",
+              border: "1px solid color-mix(in srgb, var(--accent) 25%, transparent)",
+              letterSpacing: "0.1em",
+            }}
           >
             {project.activeThemeId.replace(/-/g, " ")}
           </span>
-          <span className="text-[9px]" style={{ color: "#3D6080" }}>
+          <span className="text-[9px]" style={{ color: "var(--fg-muted)" }}>
             {formatTimeAgo(new Date(project.updatedAt))}
           </span>
         </div>

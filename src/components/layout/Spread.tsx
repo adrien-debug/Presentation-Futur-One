@@ -116,19 +116,15 @@ export default function Spread({
   );
 
   return (
-    <div className="spread-wrapper w-full flex justify-center items-start py-6 px-4">
-      {/*
-        Outer wrapper — controls layout dimensions via aspect-ratio.
-        Inner content div is at NATURAL_W × NATURAL_H, scaled to fit.
-      */}
-      <div
-        ref={wrapperRef}
-        className="relative shadow-2xl overflow-hidden"
-        style={{
-          width: "min(100%, 1400px)",
-          aspectRatio: `${NATURAL_W} / ${NATURAL_H}`,
-        }}
-      >
+    <div
+      ref={wrapperRef}
+      className="spread-wrapper relative overflow-hidden"
+      style={{
+        width: "100%",
+        height: "100%",
+        backgroundColor: theme.colors.background,
+      }}
+    >
         {/* ── SCALED CONTENT ─────────────────────────────────────────────── */}
         <div
           style={{
@@ -211,7 +207,6 @@ export default function Spread({
             );
           })}
         </div>
-      </div>
     </div>
   );
 }

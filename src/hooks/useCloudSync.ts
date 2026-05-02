@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import type { EditorState } from "./useEditorState";
 
 interface Options {
@@ -10,7 +10,7 @@ interface Options {
   debounceMs?: number;
 }
 
-type SyncStatus = "idle" | "syncing" | "error" | "saved";
+export type SyncStatus = "idle" | "dirty" | "syncing" | "saved" | "error";
 
 /**
  * Cloud sync hook — debounced push of the full EditorState to
@@ -18,24 +18,39 @@ type SyncStatus = "idle" | "syncing" | "error" | "saved";
  *
  * Operates in parallel with localStorage auto-save (offline fallback).
  * Does NOT replace useEditorState — it just mirrors it to the DB.
+ *
+ * Status lifecycle:
+ *   idle → dirty (state changed, debouncer pending)
+ *        → syncing (POST in flight)
+ *        → saved (POST succeeded; auto-reverts to idle after ~2s)
+ *        → error (POST failed; sticky until next attempt)
  */
 export function useCloudSync({ projectId, state, enabled, debounceMs = 1500 }: Options) {
   const timerRef  = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const statusRef = useRef<SyncStatus>("idle");
+  const savedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const mountedRef = useRef(false);
+  const [status, setStatus] = useState<SyncStatus>("idle");
 
   const sync = useCallback(async (s: EditorState) => {
     if (!enabled || !projectId) return;
-    statusRef.current = "syncing";
+    setStatus("syncing");
     try {
       const res = await fetch(`/api/projects/${projectId}/sync`, {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify(s),
       });
-      statusRef.current = res.ok ? "saved" : "error";
+      if (res.ok) {
+        setStatus("saved");
+        if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+        savedTimerRef.current = setTimeout(() => {
+          setStatus((prev) => (prev === "saved" ? "idle" : prev));
+        }, 2000);
+      } else {
+        setStatus("error");
+      }
     } catch {
-      statusRef.current = "error";
+      setStatus("error");
     }
   }, [projectId, enabled]);
 
@@ -47,6 +62,7 @@ export function useCloudSync({ projectId, state, enabled, debounceMs = 1500 }: O
     }
     if (!enabled) return;
 
+    setStatus("dirty");
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => sync(state), debounceMs);
 
@@ -54,6 +70,12 @@ export function useCloudSync({ projectId, state, enabled, debounceMs = 1500 }: O
       if (timerRef.current) clearTimeout(timerRef.current);
     };
   }, [state, sync, enabled, debounceMs]);
+
+  useEffect(() => {
+    return () => {
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    };
+  }, []);
 
   const flushSync = useCallback(() => {
     if (timerRef.current) {
@@ -63,5 +85,5 @@ export function useCloudSync({ projectId, state, enabled, debounceMs = 1500 }: O
     return sync(state);
   }, [state, sync]);
 
-  return { flushSync, status: statusRef.current };
+  return { flushSync, status };
 }

@@ -3,7 +3,9 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { themeList, ColorPalette, SPREAD_ZONES, defaultTheme } from "@/design-system";
+import {
+  ColorPalette, SPREAD_ZONES, defaultTheme,
+} from "@/design-system";
 import type { ThemeId, SectionZone } from "@/design-system";
 import { useEditorState, EditorState } from "@/hooks/useEditorState";
 import { useCloudSync } from "@/hooks/useCloudSync";
@@ -12,32 +14,24 @@ import { EditorProvider } from "@/contexts/EditorContext";
 import { DragProvider } from "@/contexts/DragContext";
 import Spread from "@/components/layout/Spread";
 import FloatingFormatToolbar from "@/components/ui/FloatingFormatToolbar";
-import LeftRail from "@/components/ui/LeftRail";
-import Inspector from "@/components/inspector/Inspector";
-import PageNav from "@/components/ui/PageNav";
-import BrandMenu from "@/components/ui/BrandMenu";
 import ExportDialog from "@/components/ui/ExportDialog";
 import HelpDialog from "@/components/ui/HelpDialog";
-import DesignSystemDrawer from "@/components/ui/DesignSystemDrawer";
-import Link from "next/link";
-import {
-  IconUndo, IconRedo, IconDownload, IconHelp,
-  IconPanelLeft, IconPanelRight, IconCheck, IconChevronLeft,
-} from "@/components/ui/Icon";
+import AppShell from "@/components/app/AppShell";
+import TopBar from "@/components/app/TopBar";
+import CanvasStage from "@/components/app/CanvasStage";
+import SmartToolbar from "@/components/app/SmartToolbar";
+import ContextInspector from "@/components/app/ContextInspector";
+import { AppMode } from "@/components/app/ModeSwitcher";
 import type {
   LayoutContent, LayoutType, BoxStyle, ImageData, ChartConfig, Page,
 } from "@/data/types";
 
 type ColorKey = keyof Omit<ColorPalette, "cmyk">;
 
-// ─── Convert DB rows → EditorState ────────────────────────────────────────────
+// ─── DB → EditorState conversion ──────────────────────────────────────────────
 
 function dbToEditorState(
-  project: {
-    activeThemeId: string;
-    colorOverrides: unknown;
-    showGrid: boolean;
-  },
+  project: { activeThemeId: string; colorOverrides: unknown; showGrid: boolean },
   dbPages: Array<{
     id: string; name: string; orderIndex: number;
     zones: unknown; contentStore: unknown; layoutOverrides: unknown;
@@ -77,20 +71,13 @@ function dbToEditorState(
   };
 }
 
-// ─── Loading screen ────────────────────────────────────────────────────────────
-
 function LoadingScreen() {
   return (
-    <div
-      className="min-h-screen flex items-center justify-center"
-      style={{ backgroundColor: "#05080F" }}
-    >
+    <div className="w-screen flex items-center justify-center" style={{ height: "100dvh", backgroundColor: "var(--bg-app)" }}>
       <div className="flex flex-col items-center gap-4">
-        <div
-          className="w-10 h-10 flex items-center justify-center text-[12px] font-black"
-          style={{ backgroundColor: "#00D4FF", color: "#05080F" }}
-        >F1</div>
-        <div className="text-[10px] font-mono uppercase" style={{ color: "#3D6080", letterSpacing: "0.18em" }}>
+        <div className="w-10 h-10 flex items-center justify-center text-[12px] font-black"
+          style={{ backgroundColor: "var(--accent)", color: "var(--bg-app)" }}>F1</div>
+        <div className="text-[10px] font-mono uppercase" style={{ color: "var(--fg-muted)", letterSpacing: "0.18em" }}>
           Chargement…
         </div>
       </div>
@@ -98,71 +85,72 @@ function LoadingScreen() {
   );
 }
 
-function Divider() {
-  return <div className="w-px h-5" style={{ backgroundColor: "#1F1F2C" }} />;
-}
-
 // ─── Editor page ───────────────────────────────────────────────────────────────
 
 export default function EditorPage() {
   const { id: projectId } = useParams<{ id: string }>();
-  const { data: session }  = useSession();
-  const editor             = useEditorState();
+  const { data: session } = useSession();
+  const editor = useEditorState();
   const { selection, selectZone, selectSlot, clearSelection } = useSelection();
 
-  // DB load state — blocks cloud sync until correct project is loaded
+  // DB load — source of truth
   const [projectLoaded, setProjectLoaded] = useState(false);
-
-  // Load project from DB on mount — always takes priority over localStorage
   useEffect(() => {
     if (!projectId) return;
-
     fetch(`/api/projects/${projectId}`)
-      .then((r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return r.json();
-      })
+      .then((r) => r.ok ? r.json() : Promise.reject())
       .then(({ project, pages }) => {
-        const state = dbToEditorState(project, pages);
-        editor.rehydrate(state);
+        editor.rehydrate(dbToEditorState(project, pages));
         setProjectLoaded(true);
       })
-      .catch(() => {
-        // Network offline or error — fall through to localStorage
-        setProjectLoaded(true);
-      });
+      .catch(() => setProjectLoaded(true));
   }, [projectId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const isLoggedIn = !!session?.user?.id;
 
-  // Cloud sync only starts AFTER DB load to prevent corrupting the project
-  const { flushSync } = useCloudSync({
+  const { flushSync, status: cloudStatus } = useCloudSync({
     projectId,
-    state:     editor.state,
-    enabled:   isLoggedIn && projectLoaded,
+    state:      editor.state,
+    enabled:    isLoggedIn && projectLoaded,
     debounceMs: 1500,
   });
 
-  const [sidebarOpen,   setSidebarOpen]   = useState(true);
-  const [inspectorOpen, setInspectorOpen] = useState(true);
-  const [savedToast,    setSavedToast]    = useState(false);
-  const [exportOpen,    setExportOpen]    = useState(false);
-  const [helpOpen,      setHelpOpen]      = useState(false);
-  const [dsOpen,        setDsOpen]        = useState(false);
+  // ─── UI state ──────────────────────────────────────────────────────────────
+  const [mode, setMode]               = useState<AppMode>("layout");
+  const [pageSide, setPageSide]       = useState<"left" | "right">("left");
+  const [showLabels, setShowLabels]   = useState(false);
+  const [showSafeArea, setSafeArea]   = useState(false);
+  const [showBleed, setShowBleed]     = useState(false);
+  const [localSavedAt, setLocalSavedAt] = useState(0);
+  const [exportOpen, setExportOpen]   = useState(false);
+  const [helpOpen, setHelpOpen]       = useState(false);
 
   const flushRef = useRef({ local: editor.flushSave, cloud: flushSync });
-  useEffect(() => {
-    flushRef.current = { local: editor.flushSave, cloud: flushSync };
-  }, [editor.flushSave, flushSync]);
+  useEffect(() => { flushRef.current = { local: editor.flushSave, cloud: flushSync }; }, [editor.flushSave, flushSync]);
 
   const handleSave = useCallback(() => {
     flushRef.current.local();
     if (isLoggedIn && projectLoaded) void flushRef.current.cloud();
-    setSavedToast(true);
-    setTimeout(() => setSavedToast(false), 2000);
+    setLocalSavedAt(Date.now());
   }, [isLoggedIn, projectLoaded]);
 
-  // Keyboard shortcuts
+  // Auto-revert offline "saved" badge after 2s.
+  const [offlineRevertTick, setOfflineRevertTick] = useState(0);
+  useEffect(() => {
+    if (!localSavedAt) return;
+    const t = setTimeout(() => setOfflineRevertTick((v) => v + 1), 2100);
+    return () => clearTimeout(t);
+  }, [localSavedAt]);
+
+  // Combine cloud status with offline manual-save toast.
+  const syncStatus = useMemo(() => {
+    if (isLoggedIn && projectLoaded) return cloudStatus;
+    // Offline / not authenticated: show "saved" briefly after a manual save.
+    if (localSavedAt && Date.now() - localSavedAt < 2000) return "saved" as const;
+    return "idle" as const;
+  }, [isLoggedIn, projectLoaded, cloudStatus, localSavedAt, offlineRevertTick]);
+
+  // Keyboard
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
@@ -172,7 +160,6 @@ export default function EditorPage() {
         target.tagName === "TEXTAREA"
       );
       const meta = e.metaKey || e.ctrlKey;
-
       if (meta) {
         if (e.key === "z" && !e.shiftKey) { e.preventDefault(); editor.undo(); return; }
         if (e.key === "z" && e.shiftKey)  { e.preventDefault(); editor.redo(); return; }
@@ -180,7 +167,6 @@ export default function EditorPage() {
         if (e.key === "s")                { e.preventDefault(); handleSave(); return; }
         if (e.key === "e")                { e.preventDefault(); setExportOpen(true); return; }
       }
-
       if (isEditing) return;
       if (e.key === "Escape") { clearSelection(); return; }
       if (e.key === "?")      { e.preventDefault(); setHelpOpen(true); return; }
@@ -190,10 +176,14 @@ export default function EditorPage() {
     return () => window.removeEventListener("keydown", handler);
   }, [editor, clearSelection, handleSave]);
 
-  // Clear selection when switching pages
   useEffect(() => { clearSelection(); }, [editor.state.currentPageId, clearSelection]);
 
-  // Build context value
+  // ─── Auto-switch mode when user clicks a zone (selection → layout mode) ───
+  useEffect(() => {
+    if (selection.kind && mode !== "layout") setMode("layout");
+  }, [selection.kind]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ─── Editor context value ─────────────────────────────────────────────────
   const cur = editor.currentPage;
   const editorContextValue = useMemo(() => ({
     contentStore:    cur?.contentStore    ?? {},
@@ -208,185 +198,98 @@ export default function EditorPage() {
     hideFooter:      cur?.hideFooter ?? false,
     selection,
     selectZone, selectSlot, clearSelection,
-    updateContent:           editor.updateContent,
-    setLayout:               editor.setLayout,
-    setBoxStyle:             editor.setBoxStyle,
-    resetBoxStyle:           editor.resetBoxStyle,
-    setImage:                editor.setImage,
-    removeImage:             editor.removeImage,
-    setChartConfig:          editor.setChartConfig,
-    toggleHeaderVisibility:  editor.toggleHeaderVisibility,
-    toggleFooterVisibility:  editor.toggleFooterVisibility,
-    setZones:                editor.setZones,
-    addZone:                 editor.addZone,
-    removeZone:              editor.removeZone,
-    reorderZones:            editor.reorderZones,
-    addPage:                 editor.addPage,
-    duplicatePage:           editor.duplicatePage,
-    deletePage:              editor.deletePage,
-    reorderPages:            editor.reorderPages,
-    switchPage:              editor.switchPage,
-    renamePage:              editor.renamePage,
-    activeFontPresetId:      editor.state.activeFontPresetId,
-    setFontPreset:           editor.setFontPreset,
-    loadTemplate:            editor.loadTemplate,
-    resetProject:            editor.resetProject,
+    updateContent: editor.updateContent,
+    setLayout: editor.setLayout,
+    setBoxStyle: editor.setBoxStyle,
+    resetBoxStyle: editor.resetBoxStyle,
+    setImage: editor.setImage,
+    removeImage: editor.removeImage,
+    setChartConfig: editor.setChartConfig,
+    toggleHeaderVisibility: editor.toggleHeaderVisibility,
+    toggleFooterVisibility: editor.toggleFooterVisibility,
+    setZones:    editor.setZones,
+    addZone:     editor.addZone,
+    removeZone:  editor.removeZone,
+    reorderZones: editor.reorderZones,
+    addPage: editor.addPage,
+    duplicatePage: editor.duplicatePage,
+    deletePage: editor.deletePage,
+    reorderPages: editor.reorderPages,
+    switchPage: editor.switchPage,
+    renamePage: editor.renamePage,
+    activeFontPresetId: editor.state.activeFontPresetId,
+    setFontPreset: editor.setFontPreset,
+    loadTemplate: editor.loadTemplate,
+    resetProject: editor.resetProject,
   }), [cur, editor, selection, selectZone, selectSlot, clearSelection]);
 
   const isTextEditing = selection.kind === "text";
+  const currentPage   = editor.currentPage;
+  const pageIdx       = editor.state.pageOrder.indexOf(editor.state.currentPageId);
+  const accent        = editor.mergedTheme.colors.accent;
 
-  // Show loading screen until DB project is loaded
   if (!projectLoaded) return <LoadingScreen />;
 
   return (
     <EditorProvider value={editorContextValue}>
       <DragProvider>
-        <FloatingFormatToolbar accentColor={editor.mergedTheme.colors.accent} active={isTextEditing} />
+        <FloatingFormatToolbar accentColor={accent} active={isTextEditing} />
 
-        <div
-          className="min-h-screen flex flex-col"
-          style={{ backgroundColor: "#0A0A10", color: "#E0E0E8", fontFamily: "'Satoshi', 'Inter', sans-serif" }}
-        >
-          {/* ── TOPBAR ──────────────────────────────────────────────────────── */}
-          <header
-            className="flex-shrink-0 flex items-center justify-between gap-3 px-3 py-2 border-b flex-wrap no-export"
-            style={{ borderColor: "#1F1F2C", backgroundColor: "#0D0D14" }}
-          >
-            {/* LEFT */}
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <Link
-                href="/projects"
-                className="h-7 w-7 flex items-center justify-center transition-colors"
-                style={{ border: "1px solid #2A2A3A", color: "#888", backgroundColor: "#13131C" }}
-                title="Retour aux projets"
-              >
-                <IconChevronLeft size={13} />
-              </Link>
-              <BrandMenu
-                accent={editor.mergedTheme.colors.accent}
-                background={editor.mergedTheme.colors.background}
-                onNewProject={() => window.location.href = "/projects/new"}
-                onResetProject={editor.resetProject}
-                onOpenDesignSystem={() => setDsOpen(true)}
-              />
-            </div>
-
-            {/* CENTER */}
-            <PageNav theme={editor.mergedTheme} />
-
-            {/* RIGHT */}
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <div className="flex gap-px">
-                <button
-                  onClick={editor.undo} disabled={!editor.canUndo} title="Annuler (⌘Z)"
-                  className="h-7 w-7 flex items-center justify-center transition-colors disabled:opacity-25"
-                  style={{ border: "1px solid #2A2A3A", borderRight: "none", color: editor.canUndo ? "#C5C5D0" : "#555", backgroundColor: "#13131C" }}
-                ><IconUndo size={12} /></button>
-                <button
-                  onClick={editor.redo} disabled={!editor.canRedo} title="Rétablir (⌘⇧Z)"
-                  className="h-7 w-7 flex items-center justify-center transition-colors disabled:opacity-25"
-                  style={{ border: "1px solid #2A2A3A", color: editor.canRedo ? "#C5C5D0" : "#555", backgroundColor: "#13131C" }}
-                ><IconRedo size={12} /></button>
-              </div>
-
-              <Divider />
-
-              <label
-                className="flex items-center gap-1.5 cursor-pointer h-7 px-2" title="Grille (G)"
-                style={{ border: "1px solid #2A2A3A", backgroundColor: "#13131C" }}
-              >
-                <input
-                  type="checkbox" checked={editor.state.showGrid}
-                  onChange={(e) => editor.toggleGrid(e.target.checked)}
-                  className="w-3 h-3" style={{ accentColor: editor.mergedTheme.colors.accent }}
-                />
-                <span className="text-[9px] uppercase hidden sm:inline" style={{ color: editor.state.showGrid ? editor.mergedTheme.colors.accent : "#777", letterSpacing: "0.08em", fontWeight: 500 }}>
-                  Grille
-                </span>
-              </label>
-
-              <Divider />
-
-              <button
-                onClick={handleSave} title="Sauvegarder (⌘S)"
-                className="h-7 px-3 flex items-center gap-1.5 text-[10px] uppercase font-semibold transition-all"
-                style={{
-                  border: `1px solid ${savedToast ? editor.mergedTheme.colors.accent + "80" : "#2A2A3A"}`,
-                  color: savedToast ? editor.mergedTheme.colors.accent : "#C5C5D0",
-                  backgroundColor: savedToast ? `${editor.mergedTheme.colors.accent}12` : "#13131C",
-                  letterSpacing: "0.08em", minWidth: 90,
-                }}
-              >
-                {savedToast ? <><IconCheck size={11} /> Sauvegardé</> : "Sauvegarder"}
-              </button>
-
-              <button
-                onClick={() => setExportOpen(true)} title="Exporter (⌘E)"
-                className="h-7 px-3 flex items-center gap-1.5 text-[10px] uppercase font-semibold transition-colors"
-                style={{ border: `1px solid ${editor.mergedTheme.colors.accent}80`, color: editor.mergedTheme.colors.accent, backgroundColor: `${editor.mergedTheme.colors.accent}12`, letterSpacing: "0.08em" }}
-              ><IconDownload size={12} /> Export</button>
-
-              <button
-                onClick={() => setHelpOpen(true)} title="Raccourcis (?)"
-                className="h-7 w-7 flex items-center justify-center transition-colors"
-                style={{ border: "1px solid #2A2A3A", color: "#888", backgroundColor: "#13131C" }}
-              ><IconHelp size={12} /></button>
-
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="h-7 w-7 flex items-center justify-center transition-colors"
-                style={{ border: `1px solid ${sidebarOpen ? editor.mergedTheme.colors.accent + "50" : "#2A2A3A"}`, color: sidebarOpen ? editor.mergedTheme.colors.accent : "#888", backgroundColor: sidebarOpen ? `${editor.mergedTheme.colors.accent}10` : "#13131C" }}
-                title={sidebarOpen ? "Masquer le panneau" : "Afficher le panneau"}
-              >{sidebarOpen ? <IconPanelLeft size={12} /> : <IconPanelRight size={12} />}</button>
-            </div>
-          </header>
-
-          {/* ── MAIN ────────────────────────────────────────────────────────── */}
-          <div className="flex flex-1 overflow-hidden">
-
-            {sidebarOpen && (
-              <LeftRail
-                theme={editor.mergedTheme}
-                themes={themeList}
-                activeThemeId={editor.state.activeThemeId}
-                colorOverrides={editor.state.colorOverrides}
-                onSelectTheme={editor.setTheme}
-                onColorChange={(k: ColorKey, v: string) => editor.setColor(k, v)}
-                onResetColor={editor.resetColor}
-                onResetAllColors={editor.resetAllColors}
-              />
-            )}
-
-            <main
-              className="flex-1 overflow-auto flex flex-col"
-              onClick={(e) => { if (e.target === e.currentTarget) clearSelection(); }}
+        <AppShell
+          topbar={
+            <TopBar
+              projectName={"Mon projet"}
+              pageName={currentPage?.name ?? ""}
+              pageIndex={pageIdx >= 0 ? pageIdx : 0}
+              totalPages={editor.orderedPages.length}
+              mode={mode}
+              onModeChange={setMode}
+              canUndo={editor.canUndo}
+              canRedo={editor.canRedo}
+              onUndo={editor.undo}
+              onRedo={editor.redo}
+              showGrid={editor.state.showGrid}
+              onToggleGrid={editor.toggleGrid}
+              onSave={handleSave}
+              onExport={() => setExportOpen(true)}
+              onHelp={() => setHelpOpen(true)}
+              syncStatus={syncStatus}
+              accent={accent}
+            />
+          }
+          canvas={
+            <CanvasStage
+              accent={accent}
+              showSafeArea={showSafeArea}
+              showBleed={showBleed}
             >
-              <div className="flex-1">
-                <Spread
-                  theme={editor.mergedTheme}
-                  zones={cur?.zones ?? []}
-                  onZonesChange={editor.setZones}
-                  showGrid={editor.state.showGrid}
-                />
-              </div>
-            </main>
-
-            {inspectorOpen && (
-              <Inspector theme={editor.mergedTheme} onClose={() => setInspectorOpen(false)} />
-            )}
-
-            {!inspectorOpen && (
-              <button
-                onClick={() => setInspectorOpen(true)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 px-1.5 py-3 text-[9px] font-mono uppercase z-30"
-                style={{ border: `1px solid ${editor.mergedTheme.colors.accent}60`, backgroundColor: "#0D0D14", color: editor.mergedTheme.colors.accent, letterSpacing: "0.18em" }}
-              >
-                <IconPanelRight size={13} />
-                <span style={{ writingMode: "vertical-rl" as const }}>Inspector</span>
-              </button>
-            )}
-          </div>
-        </div>
+              <Spread
+                theme={editor.mergedTheme}
+                zones={cur?.zones ?? []}
+                onZonesChange={editor.setZones}
+                showGrid={editor.state.showGrid || showLabels}
+              />
+            </CanvasStage>
+          }
+          panel={
+            <SmartToolbar
+              mode={mode}
+              theme={editor.mergedTheme}
+              activeThemeId={editor.state.activeThemeId}
+              colorOverrides={editor.state.colorOverrides}
+              onSelectTheme={editor.setTheme}
+              onColorChange={(k: ColorKey, v: string) => editor.setColor(k, v)}
+              onResetAllColors={editor.resetAllColors}
+              pageSide={pageSide}
+              onPageSideChange={setPageSide}
+              showLabels={showLabels}     onToggleLabels={setShowLabels}
+              showSafeArea={showSafeArea} onToggleSafeArea={setSafeArea}
+              showBleed={showBleed}       onToggleBleed={setShowBleed}
+              onExport={() => setExportOpen(true)}
+            />
+          }
+          inspector={<ContextInspector theme={editor.mergedTheme} />}
+        />
 
         {exportOpen && (
           <ExportDialog
@@ -396,8 +299,7 @@ export default function EditorPage() {
             onClose={() => setExportOpen(false)}
           />
         )}
-        {helpOpen  && <HelpDialog theme={editor.mergedTheme} onClose={() => setHelpOpen(false)} />}
-        {dsOpen    && <DesignSystemDrawer theme={editor.mergedTheme} onClose={() => setDsOpen(false)} />}
+        {helpOpen && <HelpDialog theme={editor.mergedTheme} onClose={() => setHelpOpen(false)} />}
       </DragProvider>
     </EditorProvider>
   );

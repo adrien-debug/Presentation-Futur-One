@@ -27,6 +27,8 @@ export default function NewProjectPage() {
   const [pending, start] = useTransition();
   const [name, setName] = useState("");
 
+  // Brand accent — must mirror --accent in globals.css. Kept as a literal for
+  // hex-alpha math (e.g. `${accent}40`) where CSS vars can't be composed.
   const accent  = "#00D4FF";
   const SATOSHI = "'Satoshi', 'Inter', sans-serif";
 
@@ -52,22 +54,23 @@ export default function NewProjectPage() {
   return (
     <div
       className="min-h-screen flex flex-col"
-      style={{ backgroundColor: "#05080F", color: "#E8F4FF", fontFamily: SATOSHI }}
+      style={{ backgroundColor: "var(--bg-app)", color: "var(--fg-primary)", fontFamily: SATOSHI }}
     >
       {/* Header */}
       <header
         className="flex items-center gap-4 px-8 py-4 border-b flex-shrink-0"
-        style={{ borderColor: "#131C28", backgroundColor: "#08101A" }}
+        style={{ borderColor: "var(--border-subtle)", backgroundColor: "var(--bg-subtle)" }}
       >
         <Link
           href="/projects"
           className="h-8 w-8 flex items-center justify-center transition-colors"
-          style={{ border: "1px solid #131C28", color: "#6B8FAA" }}
+          style={{ border: "1px solid var(--border-subtle)", color: "var(--fg-secondary)" }}
+          aria-label="Retour aux projets"
         >
           <IconChevronLeft size={14} />
         </Link>
         <div className="flex items-center gap-3">
-          <div className="w-7 h-7 flex items-center justify-center text-[10px] font-black" style={{ backgroundColor: accent, color: "#05080F" }}>F1</div>
+          <div className="w-7 h-7 flex items-center justify-center text-[10px] font-black" style={{ backgroundColor: accent, color: "var(--bg-on-accent)" }}>F1</div>
           <span className="text-[12px] font-bold uppercase" style={{ letterSpacing: "0.14em" }}>Nouveau projet</span>
         </div>
       </header>
@@ -81,7 +84,7 @@ export default function NewProjectPage() {
             <h1 className="text-[28px] font-bold mb-2" style={{ letterSpacing: "-0.025em" }}>
               Quel type de projet ?
             </h1>
-            <p className="text-[12px]" style={{ color: "#6B8FAA" }}>
+            <p className="text-[12px]" style={{ color: "var(--fg-secondary)" }}>
               Pages blanches avec quadrillage · Format A3 paysage double-page
             </p>
           </div>
@@ -96,26 +99,27 @@ export default function NewProjectPage() {
                   onClick={() => { setSelected(t); if (!name) setName(t.label); }}
                   className="flex flex-col items-start p-5 text-left transition-all"
                   style={{
-                    border:          `1px solid ${active ? accent : "#131C28"}`,
-                    backgroundColor: active ? `${accent}08` : "#08101A",
+                    border:          `1px solid ${active ? accent : "var(--border-subtle)"}`,
+                    backgroundColor: active ? `${accent}08` : "var(--bg-subtle)",
                     outline:         active ? `1px solid ${accent}20` : "none",
                     outlineOffset:   "2px",
                   }}
                   onMouseEnter={(e) => { if (!active) e.currentTarget.style.borderColor = `${accent}40`; }}
-                  onMouseLeave={(e) => { if (!active) e.currentTarget.style.borderColor = "#131C28"; }}
+                  onMouseLeave={(e) => { if (!active) e.currentTarget.style.borderColor = "var(--border-subtle)"; }}
+                  aria-pressed={active}
                 >
                   {/* Spread preview */}
                   <div className="mb-5 w-full flex justify-center">
                     <SpreadPreview count={t.pageCount} accent={accent} active={active} />
                   </div>
 
-                  <div className="text-[15px] font-semibold mb-0.5" style={{ color: active ? accent : "#E8F4FF" }}>
+                  <div className="text-[15px] font-semibold mb-0.5" style={{ color: active ? accent : "var(--fg-primary)" }}>
                     {t.label}
                   </div>
-                  <div className="text-[9px] font-mono mb-3" style={{ color: active ? `${accent}70` : "#3D6080", letterSpacing: "0.08em" }}>
+                  <div className="text-[9px] font-mono mb-3" style={{ color: active ? `${accent}70` : "var(--fg-muted)", letterSpacing: "0.08em" }}>
                     {t.sublabel}
                   </div>
-                  <div className="text-[10px] leading-relaxed" style={{ color: "#6B8FAA" }}>
+                  <div className="text-[10px] leading-relaxed" style={{ color: "var(--fg-secondary)" }}>
                     {t.description}
                   </div>
                 </button>
@@ -127,13 +131,14 @@ export default function NewProjectPage() {
           {selected && (
             <div
               className="flex items-center gap-4 p-5"
-              style={{ border: "1px solid #131C28", backgroundColor: "#08101A" }}
+              style={{ border: "1px solid var(--border-subtle)", backgroundColor: "var(--bg-subtle)" }}
             >
               <div className="flex-1 flex flex-col gap-1.5">
-                <label className="text-[9px] font-mono uppercase" style={{ color: "#6B8FAA", letterSpacing: "0.12em" }}>
+                <label htmlFor="project-name" className="text-[9px] font-mono uppercase" style={{ color: "var(--fg-secondary)", letterSpacing: "0.12em" }}>
                   Nom du projet
                 </label>
                 <input
+                  id="project-name"
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -142,9 +147,9 @@ export default function NewProjectPage() {
                   autoFocus
                   className="px-3 py-2.5 text-[13px] font-medium outline-none transition-all"
                   style={{
-                    backgroundColor: "#060D14",
+                    backgroundColor: "var(--bg-input)",
                     border:          `1px solid ${accent}40`,
-                    color:           "#E8F4FF",
+                    color:           "var(--fg-primary)",
                     caretColor:      accent,
                   }}
                   onFocus={(e)  => (e.currentTarget.style.borderColor = accent)}
@@ -156,7 +161,7 @@ export default function NewProjectPage() {
                   onClick={handleCreate}
                   disabled={pending}
                   className="h-10 px-8 text-[12px] font-semibold transition-all disabled:opacity-40"
-                  style={{ backgroundColor: accent, color: "#05080F", letterSpacing: "0.06em" }}
+                  style={{ backgroundColor: accent, color: "var(--bg-on-accent)", letterSpacing: "0.06em" }}
                 >
                   {pending ? "Création…" : `Créer · ${selected.pageCount}p`}
                 </button>
