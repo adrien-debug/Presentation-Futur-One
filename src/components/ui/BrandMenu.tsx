@@ -45,7 +45,7 @@ export default function BrandMenu({
         >
           <MenuItem onClick={() => { onNewProject(); setOpen(false); }} accent={accent}>
             <IconPlus size={12} />
-            Nouveau projet
+            Choisir un modèle…
           </MenuItem>
           <MenuItem onClick={() => { onOpenDesignSystem(); setOpen(false); }} accent={accent}>
             <IconLayout size={12} />

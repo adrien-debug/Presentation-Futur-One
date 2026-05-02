@@ -16,9 +16,15 @@ html, body {
   margin: 0;
   padding: 0;
   background: #1a1a1a;
-  font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  /* Satoshi Variable for all UI chrome — spread content overrides with theme fonts */
+  font-family: 'Satoshi', 'Inter', 'Helvetica Neue', Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Override: spread content uses theme-defined fonts, not Satoshi */
+.spread-wrapper * {
+  font-family: inherit;
 }
 
 /* Print media query */

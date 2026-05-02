@@ -582,35 +582,35 @@ export const themes: Record<ThemeId, ArtDirection> = {
     name: "Hearst Corporation",
     tagline: "Mining institutionnel, infrastructure durable, vision éditoriale",
     colors: {
-      primary: "#FFFFFF",
-      secondary: "#FCFDFC",
-      accent: "#426439",
+      primary: "#FFFFFF",        // white
+      secondary: "#F6FEF3",      // mint-green-lightest
+      accent: "#A7FB90",         // mint-green (signature)
       background: "#FFFFFF",
-      surface: "#FCFDFC",
-      surfaceAlt: "#F6FEF3",
-      text: "#000000",
-      textMuted: "#5C605C",
-      border: "#E6F1E7",
-      highlight: "#A7FB90",
-      cmyk: { primary: "C:0 M:0 Y:0 K:0", secondary: "C:1 M:0 Y:1 K:1", accent: "C:62 M:25 Y:88 K:39" },
+      surface: "#FCFDFC",        // gin-lightest
+      surfaceAlt: "#F6FEF3",     // mint-green-lightest
+      text: "#000000",           // neutral-darkest
+      textMuted: "#5C605C",      // gin-darker
+      border: "rgba(0,0,0,0.15)",// neutral-darkest @ 15% (border officielle)
+      highlight: "#A7FB90",      // mint-green
+      cmyk: { primary: "C:0 M:0 Y:0 K:0", secondary: "C:3 M:0 Y:3 K:0", accent: "C:34 M:0 Y:43 K:2" },
     },
     typography: {
-      headingFont: "'Inter', 'FK Grotesk', sans-serif",
-      bodyFont: "'Inter', 'FK Grotesk', sans-serif",
+      headingFont: "Fkgrotesktrial, Arial, sans-serif",
+      bodyFont: "Fkgrotesktrial, Arial, sans-serif",
       monoFont: "'IBM Plex Mono', monospace",
-      heroSize: "clamp(48px, 6.5vw, 104px)",
-      titleSize: "clamp(24px, 3.2vw, 52px)",
-      subtitleSize: "clamp(14px, 1.8vw, 24px)",
-      bodySize: "clamp(10px, 1.2vw, 14px)",
-      captionSize: "clamp(8px, 0.9vw, 11px)",
-      headingWeight: "500",
-      letterSpacing: "-0.025em",
+      heroSize: "5rem",          // heading-style-h1
+      titleSize: "3rem",         // heading-style-h2
+      subtitleSize: "1.5rem",    // heading-style-h5
+      bodySize: "1rem",          // text-size-regular
+      captionSize: "0.75rem",    // text-size-tiny
+      headingWeight: "400",      // FK Grotesk Regular pour les H sur le site
+      letterSpacing: "-0.03rem", // letter-spacing h2
     },
     photoStyle: "Photographie éditoriale clean, panneaux solaires, hardware mining, lumière naturelle, ratios mixtes",
     graphicStyle: "Whitespace généreux, grille fluide, typographie comme architecture, micro-illustrations dotted",
     iconography: "SVG monoline noir, tracé fin uniforme, géométrie simple",
     boxStyle: "Cartes blanches, border-radius 1rem, bordure rgba(0,0,0,.15) 1px, ombre soft",
-    titleStyle: "Inter Medium, letter-spacing -0.025em, casse normale, noir sur blanc",
+    titleStyle: "FK Grotesk Regular 400, letter-spacing -0.03rem, casse normale, noir sur blanc",
     dividerStyle: "Filet 1px rgba(0,0,0,.15), respiration verticale large",
     dataVizStyle: "Barres mint-green #A7FB90 sur blanc, libellés noir, grille minimale",
     globalTone: "Éditorial corporate clean-tech, institutionnel scandinave, confiance souriante",
@@ -620,9 +620,9 @@ export const themes: Record<ThemeId, ArtDirection> = {
       bgSurfaceAlt: "bg-[#F6FEF3]",
       text: "text-[#000000]",
       textMuted: "text-[#5C605C]",
-      accent: "text-[#426439]",
-      border: "border-[#E6F1E7]",
-      highlight: "text-[#324B2B]",
+      accent: "text-[#A7FB90]",
+      border: "border-black/15",
+      highlight: "bg-[#A7FB90]",
       headerBg: "bg-white",
       footerBg: "bg-[#000000]",
     },

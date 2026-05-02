@@ -48,6 +48,12 @@ export interface EditorContextValue {
   toggleHeaderVisibility: (hidden: boolean) => void;
   toggleFooterVisibility: (hidden: boolean) => void;
 
+  // ─── Zone mutations ───
+  setZones:      (zones: SectionZone[]) => void;
+  addZone:       (afterId: string) => void;
+  removeZone:    (id: string) => void;
+  reorderZones:  (fromIdx: number, toIdx: number) => void;
+
   // ─── Multi-page actions ───
   addPage:       (afterId?: string, name?: string) => void;
   duplicatePage: (pageId: string) => void;
@@ -76,6 +82,7 @@ const EditorContext = createContext<EditorContextValue>({
   setBoxStyle: noop, resetBoxStyle: noop,
   setImage: noop, removeImage: noop, setChartConfig: noop,
   toggleHeaderVisibility: noop, toggleFooterVisibility: noop,
+  setZones: noop, addZone: noop, removeZone: noop, reorderZones: noop,
   addPage: noop, duplicatePage: noop, deletePage: noop,
   reorderPages: noop, switchPage: noop, renamePage: noop,
   loadTemplate: noop, resetProject: noop,

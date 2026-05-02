@@ -3,6 +3,7 @@
 import React from "react";
 import { ArtDirection } from "@/design-system";
 import { F } from "@/utils/cqb";
+import { useEditor } from "@/contexts/EditorContext";
 
 interface HeaderProps {
   theme: ArtDirection;
@@ -22,11 +23,21 @@ export default function Header({
   date = "2025",
 }: HeaderProps) {
   const isLeft = side === "left";
+  const { selectZone, selection } = useEditor();
+  const key = `${side}-header`;
+  const isSelected = selection.zoneKey === key;
 
   return (
     <div
-      className="w-full h-full flex items-center justify-between relative"
-      style={{ padding: "0 4cqb", borderBottom: `1px solid ${theme.colors.border}`, backgroundColor: theme.colors.surface }}
+      onClick={(e) => { e.stopPropagation(); selectZone(key); }}
+      className="w-full h-full flex items-center justify-between relative cursor-pointer"
+      style={{
+        padding: "0 4cqb",
+        borderBottom: `1px solid ${theme.colors.border}`,
+        backgroundColor: theme.colors.surface,
+        outline: isSelected ? `2px solid ${theme.colors.accent}` : undefined,
+        outlineOffset: "-2px",
+      }}
     >
       {isLeft ? (
         <>

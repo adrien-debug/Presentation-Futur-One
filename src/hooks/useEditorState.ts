@@ -446,7 +446,12 @@ export function useEditorState() {
     saveTimer.current = setTimeout(() => {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(history.present));
-      } catch { /* ignore quota */ }
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "QuotaExceededError") {
+          // Emit a custom event so the UI can show a toast
+          window.dispatchEvent(new CustomEvent("storage-quota-exceeded"));
+        }
+      }
     }, 500);
     return () => { if (saveTimer.current) clearTimeout(saveTimer.current); };
   }, [history.present]);
