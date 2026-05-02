@@ -5,6 +5,7 @@ import { ArtDirection } from "@/design-system";
 import { useEditor } from "@/contexts/EditorContext";
 import { DEFAULT_IMAGE, ImageData, ImageFit } from "@/data/types";
 import { IMAGE_TREATMENTS } from "@/data/content";
+import { IconUpload, IconTrash } from "@/components/ui/Icon";
 
 export default function ImageInspector({ theme, slotId }: { theme: ArtDirection; slotId: string }) {
   const { images, setImage, removeImage } = useEditor();
@@ -41,9 +42,12 @@ export default function ImageInspector({ theme, slotId }: { theme: ArtDirection;
         />
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="text-[10px] font-mono uppercase py-1.5 transition-colors"
-          style={{ border: "1px solid #2A2A3A", backgroundColor: "#16161F", color: "#C5C5D0" }}
-        >⇪ Upload fichier</button>
+          className="flex items-center justify-center gap-2 text-[10px] font-mono uppercase py-1.5 transition-colors"
+          style={{ border: "1px solid #2A2A3A", backgroundColor: "#16161F", color: "#C5C5D0", letterSpacing: "0.1em" }}
+        >
+          <IconUpload size={11} />
+          Upload fichier
+        </button>
         <input
           type="text"
           placeholder="https://..."
@@ -55,9 +59,10 @@ export default function ImageInspector({ theme, slotId }: { theme: ArtDirection;
         />
         {current.src && (
           <button onClick={() => { removeImage(slotId); setUrlInput(""); }}
-            className="text-[10px] font-mono uppercase py-1.5"
-            style={{ border: "1px solid #5A2A2A", backgroundColor: "#16161F", color: "#E07070" }}>
-            ✕ Supprimer l&apos;image
+            className="flex items-center justify-center gap-2 text-[10px] font-mono uppercase py-1.5"
+            style={{ border: "1px solid #5A2A2A", backgroundColor: "#16161F", color: "#E07070", letterSpacing: "0.1em" }}>
+            <IconTrash size={11} />
+            Supprimer l&apos;image
           </button>
         )}
       </Section>

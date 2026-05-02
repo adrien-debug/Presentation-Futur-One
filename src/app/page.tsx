@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { themeList, ColorPalette, ArtDirection, SectionZone } from "@/design-system";
+import { themeList, ColorPalette } from "@/design-system";
 import { useEditorState } from "@/hooks/useEditorState";
 import { useSelection } from "@/hooks/useSelection";
 import { EditorProvider } from "@/contexts/EditorContext";
@@ -12,14 +12,21 @@ import FloatingFormatToolbar from "@/components/ui/FloatingFormatToolbar";
 import LeftRail from "@/components/ui/LeftRail";
 import Inspector from "@/components/inspector/Inspector";
 import PageNav from "@/components/ui/PageNav";
-import ThemeDropdown from "@/components/ui/ThemeDropdown";
 import BrandMenu from "@/components/ui/BrandMenu";
 import NewProjectModal from "@/components/ui/NewProjectModal";
 import ExportDialog from "@/components/ui/ExportDialog";
 import HelpDialog from "@/components/ui/HelpDialog";
 import DesignSystemDrawer from "@/components/ui/DesignSystemDrawer";
+import {
+  IconUndo, IconRedo, IconDownload, IconHelp,
+  IconPanelLeft, IconPanelRight, IconCheck,
+} from "@/components/ui/Icon";
 
 type ColorKey = keyof Omit<ColorPalette, "cmyk">;
+
+function Divider() {
+  return <div className="w-px h-5" style={{ backgroundColor: "#1F1F2C" }} />;
+}
 
 export default function Home() {
   const editor = useEditorState();
@@ -140,8 +147,8 @@ export default function Home() {
 
           {/* ── TOPBAR ────────────────────────────────────────────────────── */}
           <header
-            className="flex-shrink-0 flex items-center justify-between gap-3 px-3 py-2 border-b flex-wrap no-export"
-            style={{ borderColor: "#2A2A3A", backgroundColor: "#0D0D14" }}
+            className="flex-shrink-0 flex items-center justify-between gap-4 px-4 py-2.5 border-b flex-wrap no-export"
+            style={{ borderColor: "#1F1F2C", backgroundColor: "#0D0D14" }}
           >
             {/* Brand menu */}
             <div className="flex items-center gap-3 flex-shrink-0">
@@ -158,71 +165,105 @@ export default function Home() {
             <PageNav theme={editor.mergedTheme} />
 
             {/* Right cluster */}
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-1.5 flex-shrink-0">
               {/* Undo / Redo */}
-              <div className="flex gap-1">
+              <div className="flex gap-px">
                 <button
                   onClick={editor.undo}
                   disabled={!editor.canUndo}
                   title="Annuler (⌘Z)"
-                  className="px-2 py-1 text-[10px] font-mono transition-colors disabled:opacity-30"
-                  style={{ border: `1px solid ${editor.canUndo ? "#555" : "#333"}`, color: editor.canUndo ? "#AAA" : "#444" }}
-                >↩</button>
+                  className="h-7 w-8 flex items-center justify-center transition-colors disabled:opacity-25"
+                  style={{ border: "1px solid #2A2A3A", borderRight: "none", color: editor.canUndo ? "#C5C5D0" : "#444", backgroundColor: "#13131C" }}
+                >
+                  <IconUndo size={13} />
+                </button>
                 <button
                   onClick={editor.redo}
                   disabled={!editor.canRedo}
                   title="Rétablir (⌘⇧Z)"
-                  className="px-2 py-1 text-[10px] font-mono transition-colors disabled:opacity-30"
-                  style={{ border: `1px solid ${editor.canRedo ? "#555" : "#333"}`, color: editor.canRedo ? "#AAA" : "#444" }}
-                >↪</button>
+                  className="h-7 w-8 flex items-center justify-center transition-colors disabled:opacity-25"
+                  style={{ border: "1px solid #2A2A3A", color: editor.canRedo ? "#C5C5D0" : "#444", backgroundColor: "#13131C" }}
+                >
+                  <IconRedo size={13} />
+                </button>
               </div>
 
-              {/* Theme dropdown */}
-              <ThemeDropdown
-                themes={themeList}
-                activeThemeId={editor.state.activeThemeId}
-                hasOverrides={Object.keys(editor.state.colorOverrides).length > 0}
-                onSelect={editor.setTheme}
-              />
+              <Divider />
 
               {/* Grid toggle (shortcut G) */}
-              <label className="flex items-center gap-1 cursor-pointer" title="Grid (G)">
-                <input type="checkbox" checked={editor.state.showGrid} onChange={(e) => editor.toggleGrid(e.target.checked)} className="w-3 h-3" style={{ accentColor: editor.mergedTheme.colors.accent }} />
-                <span className="text-[8px] font-mono uppercase hidden sm:inline" style={{ color: "#777" }}>Grid</span>
+              <label
+                className="flex items-center gap-1.5 cursor-pointer h-7 px-2"
+                title="Afficher la grille (G)"
+                style={{ border: "1px solid #2A2A3A", backgroundColor: "#13131C" }}
+              >
+                <input
+                  type="checkbox"
+                  checked={editor.state.showGrid}
+                  onChange={(e) => editor.toggleGrid(e.target.checked)}
+                  className="w-3 h-3"
+                  style={{ accentColor: editor.mergedTheme.colors.accent }}
+                />
+                <span
+                  className="text-[9px] font-mono uppercase hidden sm:inline"
+                  style={{ color: editor.state.showGrid ? editor.mergedTheme.colors.accent : "#888", letterSpacing: "0.12em" }}
+                >Grille</span>
               </label>
+
+              <Divider />
 
               {/* Export */}
               <button
                 onClick={() => setExportOpen(true)}
                 title="Exporter (⌘E)"
-                className="px-2 py-1 text-[8px] font-mono uppercase transition-colors"
-                style={{ border: `1px solid ${editor.mergedTheme.colors.accent}60`, color: editor.mergedTheme.colors.accent, backgroundColor: `${editor.mergedTheme.colors.accent}10` }}
-              >↓ EXPORT</button>
+                className="h-7 px-3 flex items-center gap-1.5 text-[10px] font-mono uppercase transition-colors"
+                style={{
+                  border: `1px solid ${editor.mergedTheme.colors.accent}80`,
+                  color: editor.mergedTheme.colors.accent,
+                  backgroundColor: `${editor.mergedTheme.colors.accent}12`,
+                  letterSpacing: "0.12em",
+                }}
+              >
+                <IconDownload size={12} />
+                Export
+              </button>
 
               {/* Help */}
               <button
                 onClick={() => setHelpOpen(true)}
                 title="Raccourcis (?)"
-                className="px-2 py-1 text-[10px] font-mono transition-colors"
-                style={{ border: "1px solid #333", color: "#888" }}
-              >?</button>
+                className="h-7 w-8 flex items-center justify-center transition-colors"
+                style={{ border: "1px solid #2A2A3A", color: "#888", backgroundColor: "#13131C" }}
+              >
+                <IconHelp size={13} />
+              </button>
 
               {/* Sidebar toggle */}
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="px-2 py-1 text-[8px] font-mono uppercase transition-colors"
+                className="h-7 w-8 flex items-center justify-center transition-colors"
                 style={{
-                  border: `1px solid ${sidebarOpen ? editor.mergedTheme.colors.accent + "60" : "#333"}`,
+                  border: `1px solid ${sidebarOpen ? editor.mergedTheme.colors.accent + "60" : "#2A2A3A"}`,
                   color: sidebarOpen ? editor.mergedTheme.colors.accent : "#888",
+                  backgroundColor: sidebarOpen ? `${editor.mergedTheme.colors.accent}12` : "#13131C",
                 }}
-                title="Panneau latéral"
-              >{sidebarOpen ? "◀" : "▶"}</button>
+                title={sidebarOpen ? "Masquer le panneau latéral" : "Afficher le panneau latéral"}
+              >
+                {sidebarOpen ? <IconPanelLeft size={13} /> : <IconPanelRight size={13} />}
+              </button>
 
               {/* Saved toast */}
               {savedToast && (
-                <div className="text-[7px] font-mono px-2 py-1"
-                  style={{ backgroundColor: `${editor.mergedTheme.colors.accent}20`, color: editor.mergedTheme.colors.accent, border: `1px solid ${editor.mergedTheme.colors.accent}40` }}>
-                  Sauvegardé ✓
+                <div
+                  className="h-7 px-2.5 flex items-center gap-1.5 text-[9px] font-mono uppercase"
+                  style={{
+                    backgroundColor: `${editor.mergedTheme.colors.accent}18`,
+                    color: editor.mergedTheme.colors.accent,
+                    border: `1px solid ${editor.mergedTheme.colors.accent}40`,
+                    letterSpacing: "0.12em",
+                  }}
+                >
+                  <IconCheck size={11} />
+                  Sauvegardé
                 </div>
               )}
             </div>
@@ -282,15 +323,18 @@ export default function Home() {
             {!inspectorOpen && (
               <button
                 onClick={() => setInspectorOpen(true)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 px-2 py-3 text-[8px] font-mono uppercase z-30"
+                className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 px-1.5 py-3 text-[9px] font-mono uppercase z-30"
                 style={{
-                  writingMode: "vertical-rl" as const,
                   border: `1px solid ${editor.mergedTheme.colors.accent}60`,
                   backgroundColor: "#0D0D14",
                   color: editor.mergedTheme.colors.accent,
+                  letterSpacing: "0.18em",
                 }}
                 title="Ouvrir l'inspector"
-              >Inspector ▶</button>
+              >
+                <IconPanelRight size={13} />
+                <span style={{ writingMode: "vertical-rl" as const }}>Inspector</span>
+              </button>
             )}
           </div>
         </div>

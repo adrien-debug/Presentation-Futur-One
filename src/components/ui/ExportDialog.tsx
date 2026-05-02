@@ -5,6 +5,7 @@ import { ArtDirection } from "@/design-system";
 import { Page } from "@/data/types";
 import { useEditor } from "@/contexts/EditorContext";
 import { exportToPDF, exportToPNG, downloadBlob } from "@/utils/export";
+import { IconDownload } from "./Icon";
 
 export default function ExportDialog({
   theme, pages, currentPageId, onClose,
@@ -172,7 +173,7 @@ export default function ExportDialog({
 
           {error && (
             <div className="text-[10px] p-2" style={{ backgroundColor: "#3A1A1A", color: "#E07070", border: "1px solid #5A2A2A" }}>
-              ⚠ {error}
+              {error}
             </div>
           )}
         </div>
@@ -194,9 +195,12 @@ export default function ExportDialog({
               >Fermer</button>
               <button
                 onClick={handleExport}
-                className="text-[10px] font-mono uppercase px-4 py-1.5"
-                style={{ border: `1px solid ${accent}`, backgroundColor: `${accent}20`, color: accent }}
-              >↓ Exporter</button>
+                className="flex items-center gap-2 text-[10px] font-mono uppercase px-4 py-1.5"
+                style={{ border: `1px solid ${accent}`, backgroundColor: `${accent}20`, color: accent, letterSpacing: "0.12em" }}
+              >
+                <IconDownload size={12} />
+                Exporter
+              </button>
             </>
           )}
         </div>

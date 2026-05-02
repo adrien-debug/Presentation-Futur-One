@@ -8,6 +8,7 @@ import ZoneInspector from "./ZoneInspector";
 import TextInspector from "./TextInspector";
 import ImageInspector from "./ImageInspector";
 import ChartInspector from "./ChartInspector";
+import { IconClose } from "@/components/ui/Icon";
 
 interface InspectorProps {
   theme: ArtDirection;
@@ -43,16 +44,21 @@ export default function Inspector({ theme, onClose }: InspectorProps) {
         backgroundColor: "#0A0A10",
       }}
     >
-      <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: "#1E1E2A" }}>
-        <span className="text-[8px] font-mono uppercase tracking-widest" style={{ color: theme.colors.accent, letterSpacing: "0.15em" }}>
+      <div className="flex items-center justify-between px-3 py-2.5 border-b" style={{ borderColor: "#1E1E2A" }}>
+        <span className="text-[9px] font-mono uppercase" style={{ color: theme.colors.accent, letterSpacing: "0.18em" }}>
           Inspector
         </span>
         <button
           onClick={onClose}
           title="Fermer"
-          className="text-[10px] font-mono px-1"
+          aria-label="Fermer l'inspector"
+          className="w-5 h-5 flex items-center justify-center transition-colors"
           style={{ color: "#666" }}
-        >×</button>
+          onMouseEnter={(e) => { e.currentTarget.style.color = "#E5E5EE"; }}
+          onMouseLeave={(e) => { e.currentTarget.style.color = "#666"; }}
+        >
+          <IconClose size={12} />
+        </button>
       </div>
       <div className="flex-1 p-3">{body}</div>
     </aside>

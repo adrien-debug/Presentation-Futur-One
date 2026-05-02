@@ -3,6 +3,7 @@
 import React, { useRef, useState } from "react";
 import { ColorPalette, ArtDirection } from "@/design-system";
 import { hexToCmyk, isValidHex } from "@/utils/color";
+import { IconRefresh } from "./Icon";
 
 type ColorKey = keyof Omit<ColorPalette, "cmyk">;
 
@@ -270,11 +271,12 @@ function ColorTokenRow({
             onReset(tokenKey);
             setHexInput(baseValue);
           }}
-          className="text-[8px] leading-none flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
-          style={{ color: "#f87171", width: "12px" }}
+          className="leading-none flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+          style={{ color: "#f87171", width: "12px", height: "12px" }}
           title="Réinitialiser"
+          aria-label="Réinitialiser cette couleur"
         >
-          ↺
+          <IconRefresh size={11} />
         </button>
       )}
       {!isOverridden && <div style={{ width: "12px" }} />}

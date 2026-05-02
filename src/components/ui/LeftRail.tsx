@@ -10,6 +10,7 @@ import {
   IMAGE_TREATMENTS, DIVIDER_STYLES,
 } from "@/data/content";
 import ColorTokenEditor from "./ColorTokenEditor";
+import { IconPalette, IconPages, IconLayout, IconLibrary, IconDroplet } from "./Icon";
 
 type Tab = "themes" | "pages" | "layouts" | "library" | "colors";
 
@@ -26,12 +27,14 @@ interface LeftRailProps {
   onResetAllColors: () => void;
 }
 
-const TABS: { id: Tab; icon: string; label: string }[] = [
-  { id: "themes",  icon: "🎨", label: "Thèmes" },
-  { id: "pages",   icon: "📑", label: "Pages" },
-  { id: "layouts", icon: "🧩", label: "Layouts" },
-  { id: "library", icon: "📚", label: "Library" },
-  { id: "colors",  icon: "🌈", label: "Couleurs" },
+type IconComponent = React.ComponentType<{ size?: number; className?: string }>;
+
+const TABS: { id: Tab; Icon: IconComponent; label: string }[] = [
+  { id: "themes",  Icon: IconPalette, label: "Thèmes" },
+  { id: "pages",   Icon: IconPages,   label: "Pages" },
+  { id: "layouts", Icon: IconLayout,  label: "Layouts" },
+  { id: "library", Icon: IconLibrary, label: "Library" },
+  { id: "colors",  Icon: IconDroplet, label: "Couleurs" },
 ];
 
 export default function LeftRail(props: LeftRailProps) {
@@ -40,9 +43,9 @@ export default function LeftRail(props: LeftRailProps) {
   const accent = theme.colors.accent;
 
   return (
-    <div className="flex flex-shrink-0 z-30 no-export" style={{ borderRight: "1px solid #2A2A3A", backgroundColor: "#0A0A10" }}>
+    <div className="flex flex-shrink-0 z-30 no-export" style={{ borderRight: "1px solid #1F1F2C", backgroundColor: "#0A0A10" }}>
       {/* Vertical icon bar */}
-      <div className="flex flex-col gap-0.5 p-1.5" style={{ borderRight: "1px solid #1E1E2A", width: 44 }}>
+      <div className="flex flex-col gap-1 p-2" style={{ borderRight: "1px solid #1E1E2A", width: 52 }}>
         {TABS.map((t) => {
           const isActive = active === t.id;
           return (
@@ -50,17 +53,20 @@ export default function LeftRail(props: LeftRailProps) {
               key={t.id}
               onClick={() => setActive(t.id)}
               title={t.label}
-              className="flex flex-col items-center justify-center gap-0.5 transition-all"
+              aria-label={t.label}
+              className="flex flex-col items-center justify-center gap-1 transition-all"
               style={{
-                width: 32, height: 40,
-                backgroundColor: isActive ? `${accent}20` : "transparent",
-                border: `1px solid ${isActive ? accent : "transparent"}`,
+                width: 36, height: 44,
+                backgroundColor: isActive ? `${accent}18` : "transparent",
+                border: `1px solid ${isActive ? `${accent}80` : "transparent"}`,
                 color: isActive ? accent : "#777",
                 cursor: "pointer",
               }}
+              onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = "#C5C5D0"; }}
+              onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = "#777"; }}
             >
-              <span style={{ fontSize: 14 }}>{t.icon}</span>
-              <span className="text-[5.5px] font-mono uppercase tracking-tight" style={{ letterSpacing: "0.05em" }}>
+              <t.Icon size={15} />
+              <span className="text-[7px] font-mono uppercase" style={{ letterSpacing: "0.06em" }}>
                 {t.label}
               </span>
             </button>

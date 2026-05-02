@@ -250,7 +250,7 @@ function Layouts({ theme }: { theme: ArtDirection }) {
   return (
     <div className="flex flex-col gap-4">
       <Title theme={theme}>13 layouts disponibles</Title>
-      <div className="text-[9px]" style={{ color: "#888" }}>Cliquez sur une zone du canvas et sélectionnez un layout, ou glissez depuis le panel 🧩 Layouts.</div>
+      <div className="text-[9px]" style={{ color: "#888" }}>Cliquez sur une zone du canvas et sélectionnez un layout, ou glissez depuis le panel Layouts.</div>
       <div className="grid grid-cols-4 gap-2">
         {ALL_LAYOUTS.map((l) => (
           <div key={l.id} className="p-3 flex flex-col items-center gap-2" style={{ border: `1px solid ${theme.colors.border}`, backgroundColor: theme.colors.surface, minHeight: 110 }}>
