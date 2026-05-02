@@ -1,19 +1,20 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { ArtDirection } from "@/design-system";
 import { useDrag, DRAG_MIME } from "@/contexts/DragContext";
 import { ContentDragKind } from "@/data/types";
 import {
   INSTITUTIONAL_TITLES, HERO_TITLES, TEXT_BLOCK_STYLES, CHART_IDEAS,
 } from "@/data/content";
+import { useAssets } from "@/hooks/useAssets";
 import SegmentedControl from "../SegmentedControl";
 
-type Tab = "titles" | "text" | "charts";
+type Tab = "images" | "titles" | "text" | "charts";
 
-export default function AssetsModePanel({ theme }: { theme: ArtDirection }) {
+export default function AssetsModePanel({ theme, projectId }: { theme: ArtDirection; projectId?: string }) {
   const accent = theme.colors.accent;
-  const [tab, setTab] = useState<Tab>("titles");
+  const [tab, setTab] = useState<Tab>("images");
   const { startDrag, endDrag } = useDrag();
 
   const dragHandlers = (payload: ContentDragKind, source: string) => ({
@@ -37,6 +38,7 @@ export default function AssetsModePanel({ theme }: { theme: ArtDirection }) {
           fullWidth
           size="sm"
           options={[
+            { value: "images", label: "Images" },
             { value: "titles", label: "Titres" },
             { value: "text",   label: "Texte" },
             { value: "charts", label: "Charts" },
@@ -49,6 +51,15 @@ export default function AssetsModePanel({ theme }: { theme: ArtDirection }) {
 
       {/* Content */}
       <div className="flex-1 scroll-y px-3 pb-4">
+
+        {tab === "images" && (
+          <ImagesTab
+            accent={accent}
+            projectId={projectId}
+            startDrag={startDrag}
+            endDrag={endDrag}
+          />
+        )}
 
         {tab === "titles" && (
           <div className="flex flex-col gap-1">
@@ -125,6 +136,101 @@ export default function AssetsModePanel({ theme }: { theme: ArtDirection }) {
         )}
 
       </div>
+    </div>
+  );
+}
+
+// ─── Images tab ──────────────────────────────────────────────────────────────
+
+interface ImagesTabProps {
+  accent: string;
+  projectId?: string;
+  startDrag: (s: { type: "content"; payload: ContentDragKind; source: string }) => void;
+  endDrag: () => void;
+}
+
+function ImagesTab({ accent, projectId, startDrag, endDrag }: ImagesTabProps) {
+  const { assets, loading, error, upload } = useAssets(projectId);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+
+  const onPick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBusy(true);
+    await upload(file);
+    setBusy(false);
+    e.target.value = "";
+  };
+
+  return (
+    <div className="flex flex-col gap-2">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={onPick}
+        className="hidden"
+      />
+      <button
+        onClick={() => fileInputRef.current?.click()}
+        disabled={busy}
+        className="w-full py-2 text-[10px] uppercase font-medium transition-all disabled:opacity-50"
+        style={{ border: `1px dashed ${accent}50`, color: accent, backgroundColor: `${accent}08`, letterSpacing: "0.1em" }}
+      >
+        {busy ? "Import…" : "Importer une image"}
+      </button>
+
+      {error && (
+        <div className="text-[9px] px-2 py-1.5" style={{ color: "#E07070", border: "1px solid #5A2A2A" }}>
+          {error}
+        </div>
+      )}
+
+      {loading && assets.length === 0 && (
+        <div className="text-[9px]" style={{ color: "var(--fg-muted)" }}>Chargement…</div>
+      )}
+
+      {!loading && assets.length === 0 && (
+        <div className="text-[9px] mt-1" style={{ color: "var(--fg-muted)" }}>
+          Aucune image. Importer un PNG/JPG ≤ 2 Mo.
+        </div>
+      )}
+
+      {assets.length > 0 && (
+        <>
+          <div className="text-[8px] mt-1" style={{ color: "var(--fg-muted)", letterSpacing: "0.06em" }}>
+            Glisser sur une zone pour appliquer
+          </div>
+          <div className="grid grid-cols-3 gap-1.5">
+            {assets.map((a) => {
+              const src = a.src ?? "";
+              if (!src) return null;
+              const payload: ContentDragKind = { kind: "image-asset", src };
+              return (
+                <div
+                  key={a.id}
+                  draggable
+                  onDragStart={(e) => {
+                    e.dataTransfer.setData(DRAG_MIME.CONTENT, JSON.stringify(payload));
+                    e.dataTransfer.effectAllowed = "copy";
+                    startDrag({ type: "content", payload, source: `asset-${a.id}` });
+                  }}
+                  onDragEnd={() => endDrag()}
+                  className="aspect-square cursor-grab active:cursor-grabbing transition-all"
+                  style={{
+                    border: "1px solid var(--border-subtle)",
+                    backgroundImage: `url(${src})`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                  }}
+                  title={a.mimeType ?? ""}
+                />
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }

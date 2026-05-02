@@ -3,7 +3,7 @@
 import React, { createContext, useContext } from "react";
 import {
   LayoutContent, LayoutType, BoxStyle, ImageData, ChartConfig,
-  Page, UISelection, SlotKind, Template,
+  Page, PageZones, UISelection, SlotKind,
 } from "@/data/types";
 import { SectionZone } from "@/design-system";
 import { FontPresetId } from "@/design-system/font-presets";
@@ -24,7 +24,8 @@ export interface EditorContextValue {
   boxStyles:       Record<string, Partial<BoxStyle>>;
   images:          Record<string, Partial<ImageData>>;
   chartConfigs:    Record<string, Partial<ChartConfig>>;
-  zones:           SectionZone[];
+  /** Independent grids per side. Use `zones.left` / `zones.right`. */
+  zones:           PageZones;
 
   // ─── Page meta ───
   currentPageId: string;
@@ -49,11 +50,11 @@ export interface EditorContextValue {
   toggleHeaderVisibility: (hidden: boolean) => void;
   toggleFooterVisibility: (hidden: boolean) => void;
 
-  // ─── Zone mutations ───
-  setZones:      (zones: SectionZone[]) => void;
-  addZone:       (afterId: string) => void;
-  removeZone:    (id: string) => void;
-  reorderZones:  (fromIdx: number, toIdx: number) => void;
+  // ─── Zone mutations (per-side: independent grids) ───
+  setZones:      (side: "left" | "right", zones: SectionZone[]) => void;
+  addZone:       (side: "left" | "right", afterId: string) => void;
+  removeZone:    (side: "left" | "right", id: string) => void;
+  reorderZones:  (side: "left" | "right", fromIdx: number, toIdx: number) => void;
 
   // ─── Multi-page actions ───
   addPage:       (afterId?: string, name?: string) => void;
@@ -68,7 +69,6 @@ export interface EditorContextValue {
   setFontPreset: (presetId: FontPresetId | null) => void;
 
   // ─── Bulk ───
-  loadTemplate: (template: Template) => void;
   resetProject: () => void;
 }
 
@@ -76,7 +76,7 @@ const noop = () => {};
 
 const EditorContext = createContext<EditorContextValue>({
   contentStore: {}, layoutOverrides: {}, boxStyles: {}, images: {}, chartConfigs: {},
-  zones: [],
+  zones: { left: [], right: [] },
   currentPageId: "",
   pages: [],
   hideHeader: false,
@@ -92,7 +92,7 @@ const EditorContext = createContext<EditorContextValue>({
   reorderPages: noop, switchPage: noop, renamePage: noop,
   activeFontPresetId: null,
   setFontPreset: noop,
-  loadTemplate: noop, resetProject: noop,
+  resetProject: noop,
 });
 
 export const useEditor = () => useContext(EditorContext);

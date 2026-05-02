@@ -3,7 +3,7 @@
 import { useReducer, useEffect, useCallback, useRef } from "react";
 import { themeList, defaultTheme, ArtDirection, SectionZone, SPREAD_ZONES, ColorPalette, ThemeId } from "@/design-system";
 import { ZONE } from "@/design-system/constants";
-import { LayoutContent, LayoutType, BoxStyle, ImageData, ChartConfig, Page, Template } from "@/data/types";
+import { LayoutContent, LayoutType, BoxStyle, ImageData, ChartConfig, Page } from "@/data/types";
 import { FONT_PRESETS, FontPresetId } from "@/design-system/font-presets";
 
 /**
@@ -40,11 +40,11 @@ type EditorAction =
   | { type: "RESET_ALL_COLORS" }
   | { type: "SET_FONT_PRESET"; presetId: FontPresetId | null }
   | { type: "TOGGLE_GRID"; value: boolean }
-  // Per-page (act on currentPageId)
-  | { type: "SET_ZONES"; zones: SectionZone[] }
-  | { type: "ADD_ZONE"; afterId: string }
-  | { type: "REMOVE_ZONE"; id: string }
-  | { type: "REORDER_ZONES"; fromIdx: number; toIdx: number }
+  // Per-page (act on currentPageId) — `side` selects independent left/right grid
+  | { type: "SET_ZONES"; side: "left" | "right"; zones: SectionZone[] }
+  | { type: "ADD_ZONE"; side: "left" | "right"; afterId: string }
+  | { type: "REMOVE_ZONE"; side: "left" | "right"; id: string }
+  | { type: "REORDER_ZONES"; side: "left" | "right"; fromIdx: number; toIdx: number }
   | { type: "UPDATE_CONTENT"; key: string; field: keyof LayoutContent; value: unknown }
   | { type: "SET_LAYOUT"; key: string; layout: LayoutType }
   | { type: "SET_BOX_STYLE"; styleKey: string; style: Partial<BoxStyle> }
@@ -62,7 +62,6 @@ type EditorAction =
   | { type: "SWITCH_PAGE"; pageId: string }
   | { type: "RENAME_PAGE"; pageId: string; name: string }
   // Bulk
-  | { type: "LOAD_TEMPLATE"; template: Template }
   | { type: "RESET_PROJECT" }
   | { type: "REHYDRATE"; state: EditorState }
   | { type: "UNDO" }
@@ -82,7 +81,10 @@ function createBlankPage(name = "Page 1", id?: string): Page {
   return {
     id: id ?? uid("page"),
     name,
-    zones: SPREAD_ZONES.map((z) => ({ ...z })),
+    zones: {
+      left:  SPREAD_ZONES.map((z) => ({ ...z })),
+      right: SPREAD_ZONES.map((z) => ({ ...z })),
+    },
     contentStore: {},
     layoutOverrides: {},
     boxStyles: {},
@@ -117,9 +119,14 @@ function isValidZone(z: unknown): z is SectionZone {
 function isValidPage(p: unknown): p is Page {
   if (typeof p !== "object" || p === null) return false;
   const page = p as Page;
+  const z = page.zones as unknown;
+  const zonesOk =
+    typeof z === "object" && z !== null
+    && Array.isArray((z as { left?: unknown }).left) && ((z as { left: unknown[] }).left).every(isValidZone)
+    && Array.isArray((z as { right?: unknown }).right) && ((z as { right: unknown[] }).right).every(isValidZone);
   return typeof page.id === "string"
     && typeof page.name === "string"
-    && Array.isArray(page.zones) && page.zones.every(isValidZone)
+    && zonesOk
     && typeof page.contentStore === "object"
     && typeof page.layoutOverrides === "object"
     && typeof page.boxStyles === "object"
@@ -174,50 +181,56 @@ function reducePresent(present: EditorState, action: EditorAction): EditorState 
     case "TOGGLE_GRID":
       return { ...present, showGrid: action.value };
 
-    // ─── Per-page ───────────────────────────────────────────────────────────
+    // ─── Per-page (independent left/right grids) ────────────────────────────
     case "SET_ZONES":
-      return patchCurrentPage(present, (p) => ({ ...p, zones: action.zones }));
+      return patchCurrentPage(present, (p) => ({
+        ...p,
+        zones: { ...p.zones, [action.side]: action.zones },
+      }));
 
     case "ADD_ZONE":
       return patchCurrentPage(present, (p) => {
-        const idx = p.zones.findIndex((z) => z.id === action.afterId);
+        const sideZones = p.zones[action.side];
+        const idx = sideZones.findIndex((z) => z.id === action.afterId);
         if (idx === -1) return p;
-        const sourceZone = p.zones[idx];
+        const sourceZone = sideZones[idx];
         const newRatio = Math.max(ZONE.MIN_RATIO, sourceZone.heightRatio / 2);
         const sourceNew = Math.max(ZONE.MIN_RATIO, sourceZone.heightRatio - newRatio);
-        const sectionCount = p.zones.filter((z) => !["header", "footer"].includes(z.id)).length;
+        const sectionCount = sideZones.filter((z) => !["header", "footer"].includes(z.id)).length;
         const newZone: SectionZone = {
           id: uid("section"),
           label: `SECTION ${sectionCount + 1}`,
           heightRatio: newRatio,
         };
-        const zones = [...p.zones];
-        zones[idx] = { ...sourceZone, heightRatio: sourceNew };
-        zones.splice(idx + 1, 0, newZone);
-        return { ...p, zones };
+        const next = [...sideZones];
+        next[idx] = { ...sourceZone, heightRatio: sourceNew };
+        next.splice(idx + 1, 0, newZone);
+        return { ...p, zones: { ...p.zones, [action.side]: next } };
       });
 
     case "REMOVE_ZONE":
       return patchCurrentPage(present, (p) => {
         if (action.id === "header" || action.id === "footer") return p;
-        const idx = p.zones.findIndex((z) => z.id === action.id);
-        if (idx === -1 || p.zones.length <= 3) return p;
-        const removed = p.zones[idx];
+        const sideZones = p.zones[action.side];
+        const idx = sideZones.findIndex((z) => z.id === action.id);
+        if (idx === -1 || sideZones.length <= 3) return p;
+        const removed = sideZones[idx];
         const target = idx > 1 ? idx - 1 : idx + 1;
-        const zones = p.zones.filter((_, i) => i !== idx);
+        const next = sideZones.filter((_, i) => i !== idx);
         const targetIdxAfter = target > idx ? target - 1 : target;
-        zones[targetIdxAfter] = {
-          ...zones[targetIdxAfter],
-          heightRatio: zones[targetIdxAfter].heightRatio + removed.heightRatio,
+        next[targetIdxAfter] = {
+          ...next[targetIdxAfter],
+          heightRatio: next[targetIdxAfter].heightRatio + removed.heightRatio,
         };
+        // Only filter content keys belonging to *this* side
         const isZoneKey = (k: string) =>
-          k === `left-${action.id}` || k === `right-${action.id}` ||
-          k.startsWith(`left-${action.id}-`) || k.startsWith(`right-${action.id}-`);
+          k === `${action.side}-${action.id}` ||
+          k.startsWith(`${action.side}-${action.id}-`);
         const filterOut = <T,>(obj: Record<string, T>): Record<string, T> =>
           Object.fromEntries(Object.entries(obj).filter(([k]) => !isZoneKey(k)));
         return {
           ...p,
-          zones,
+          zones: { ...p.zones, [action.side]: next },
           boxStyles:       filterOut(p.boxStyles),
           contentStore:    filterOut(p.contentStore),
           layoutOverrides: filterOut(p.layoutOverrides),
@@ -228,14 +241,15 @@ function reducePresent(present: EditorState, action: EditorAction): EditorState 
 
     case "REORDER_ZONES":
       return patchCurrentPage(present, (p) => {
-        const { fromIdx, toIdx } = action;
-        const zones = [...p.zones];
-        const lastIdx = zones.length - 1;
+        const { fromIdx, toIdx, side } = action;
+        const sideZones = p.zones[side];
+        const next = [...sideZones];
+        const lastIdx = next.length - 1;
         if (fromIdx === 0 || fromIdx === lastIdx) return p;
         if (toIdx === 0 || toIdx > lastIdx - 1) return p;
-        const [moved] = zones.splice(fromIdx, 1);
-        zones.splice(toIdx, 0, moved);
-        return { ...p, zones };
+        const [moved] = next.splice(fromIdx, 1);
+        next.splice(toIdx, 0, moved);
+        return { ...p, zones: { ...p.zones, [side]: next } };
       });
 
     case "UPDATE_CONTENT":
@@ -370,26 +384,6 @@ function reducePresent(present: EditorState, action: EditorAction): EditorState 
     }
 
     // ─── Bulk ───────────────────────────────────────────────────────────────
-    case "LOAD_TEMPLATE": {
-      const t = action.template;
-      const pages: Record<string, Page> = {};
-      const pageOrder: string[] = [];
-      for (const tp of t.pages) {
-        // Clone each page with a fresh id to avoid collisions
-        const id = uid("page");
-        const cloned: Page = { ...JSON.parse(JSON.stringify(tp)) as Page, id };
-        pages[id] = cloned;
-        pageOrder.push(id);
-      }
-      return {
-        ...createInitialState(),
-        activeThemeId: t.themeId,
-        pages,
-        pageOrder,
-        currentPageId: pageOrder[0],
-      };
-    }
-
     case "RESET_PROJECT":
       return createInitialState();
 
@@ -493,11 +487,11 @@ export function useEditorState() {
   const resetColor      = useCallback((key: ColorKey) => dispatch({ type: "RESET_COLOR", key }), []);
   const resetAllColors  = useCallback(() => dispatch({ type: "RESET_ALL_COLORS" }), []);
   const toggleGrid      = useCallback((value: boolean) => dispatch({ type: "TOGGLE_GRID", value }), []);
-  // Per-page (act on currentPageId implicitly)
-  const setZones        = useCallback((zones: SectionZone[]) => dispatch({ type: "SET_ZONES", zones }), []);
-  const addZone         = useCallback((afterId: string) => dispatch({ type: "ADD_ZONE", afterId }), []);
-  const removeZone      = useCallback((id: string) => dispatch({ type: "REMOVE_ZONE", id }), []);
-  const reorderZones    = useCallback((fromIdx: number, toIdx: number) => dispatch({ type: "REORDER_ZONES", fromIdx, toIdx }), []);
+  // Per-page (act on currentPageId implicitly) — `side` selects independent grid
+  const setZones        = useCallback((side: "left" | "right", zones: SectionZone[]) => dispatch({ type: "SET_ZONES", side, zones }), []);
+  const addZone         = useCallback((side: "left" | "right", afterId: string) => dispatch({ type: "ADD_ZONE", side, afterId }), []);
+  const removeZone      = useCallback((side: "left" | "right", id: string) => dispatch({ type: "REMOVE_ZONE", side, id }), []);
+  const reorderZones    = useCallback((side: "left" | "right", fromIdx: number, toIdx: number) => dispatch({ type: "REORDER_ZONES", side, fromIdx, toIdx }), []);
   const updateContent   = useCallback(
     (key: string, field: keyof LayoutContent, value: unknown) => dispatch({ type: "UPDATE_CONTENT", key, field, value }),
     []
@@ -527,7 +521,6 @@ export function useEditorState() {
   const switchPage      = useCallback((pageId: string) => dispatch({ type: "SWITCH_PAGE", pageId }), []);
   const renamePage      = useCallback((pageId: string, name: string) => dispatch({ type: "RENAME_PAGE", pageId, name }), []);
   // Bulk
-  const loadTemplate    = useCallback((template: Template) => dispatch({ type: "LOAD_TEMPLATE", template }), []);
   const resetProject    = useCallback(() => dispatch({ type: "RESET_PROJECT" }), []);
 
   const flushSave = useCallback(() => {
@@ -553,7 +546,7 @@ export function useEditorState() {
     setImage, removeImage, setChartConfig,
     toggleHeaderVisibility, toggleFooterVisibility,
     addPage, duplicatePage, deletePage, reorderPages, switchPage, renamePage,
-    loadTemplate, resetProject,
+    resetProject,
     flushSave,
     rehydrate: useCallback((state: EditorState) => dispatch({ type: "REHYDRATE", state }), []),
   };

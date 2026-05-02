@@ -22,7 +22,7 @@ export default function LayoutModePanel({
 }: LayoutModePanelProps) {
   const {
     pages, currentPageId, switchPage, addPage, duplicatePage, deletePage, renamePage,
-    zones, selection, selectZone, clearSelection,
+    zones, selection, selectZone, clearSelection, addZone,
   } = useEditor();
 
   return (
@@ -100,7 +100,7 @@ export default function LayoutModePanel({
       {/* ZONES */}
       <Section title={`Zones · ${pageSide}`} accent={accent}>
         <div className="grid grid-cols-1 gap-1">
-          {zones.map((z) => {
+          {zones[pageSide].map((z) => {
             const key = `${pageSide}-${z.id}`;
             const active = selection.zoneKey === key;
             return (
@@ -121,6 +121,19 @@ export default function LayoutModePanel({
             );
           })}
         </div>
+        <button
+          onClick={() => {
+            const sideZones = zones[pageSide];
+            const sectionIds = sideZones.filter((z) => z.id !== "header" && z.id !== "footer").map((z) => z.id);
+            const afterId = sectionIds[sectionIds.length - 1] ?? "header";
+            addZone(pageSide, afterId);
+          }}
+          className="flex items-center justify-center gap-1.5 mt-2 py-1.5 text-[9px] uppercase font-medium transition-all w-full"
+          style={{ border: `1px dashed ${accent}50`, color: accent, backgroundColor: `${accent}05`, letterSpacing: "0.1em" }}
+          title={`Ajouter une section sur la page ${pageSide === "left" ? "gauche" : "droite"}`}
+        >
+          <IconPlus size={11} /> Ajouter une section
+        </button>
       </Section>
 
       {/* TOGGLES */}

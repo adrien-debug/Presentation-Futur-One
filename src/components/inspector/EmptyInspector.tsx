@@ -17,9 +17,14 @@ export default function EmptyInspector({ theme }: { theme: ArtDirection }) {
   const accent = theme.colors.accent;
   const currentPage = pages.find((p) => p.id === currentPageId);
 
-  // Compute the last section id (for "+ Add" insertion point)
-  const sectionIds = zones.filter((z) => z.id !== "header" && z.id !== "footer").map((z) => z.id);
-  const lastSectionId = sectionIds[sectionIds.length - 1] ?? "header";
+  // Last section id per side (for "+ Add" insertion point on that side)
+  const lastSectionIdOf = (sideZones: typeof zones.left) => {
+    const ids = sideZones.filter((z) => z.id !== "header" && z.id !== "footer").map((z) => z.id);
+    return ids[ids.length - 1] ?? "header";
+  };
+  const lastLeft  = lastSectionIdOf(zones.left);
+  const lastRight = lastSectionIdOf(zones.right);
+  const totalCount = zones.left.length + zones.right.length;
 
   return (
     <div className="flex flex-col gap-4">
@@ -49,75 +54,32 @@ export default function EmptyInspector({ theme }: { theme: ArtDirection }) {
         />
       </Section>
 
-      {/* Zones list */}
+      {/* Zones list — independent grids per side */}
       <Section
-        label={`Zones (${zones.length})`}
+        label={`Zones (${totalCount})`}
         theme={theme}
-        action={
-          <button
-            onClick={() => addZone(lastSectionId)}
-            className="flex items-center gap-1 text-[7px] font-mono uppercase px-1.5 py-0.5"
-            style={{ border: `1px solid ${accent}40`, color: accent, backgroundColor: `${accent}10`, letterSpacing: "0.1em" }}
-            title="Ajouter une section"
-          >
-            <IconPlus size={9} />
-            Section
-          </button>
-        }
       >
-        <div className="flex flex-col gap-px">
-          {zones.map((z, i) => {
-            const isHF = z.id === "header" || z.id === "footer";
-            const hidden = (z.id === "header" && hideHeader) || (z.id === "footer" && hideFooter);
-            const pct = Math.round(z.heightRatio * 100);
-            const num = isHF ? (z.id === "header" ? "H" : "F") : String(i).padStart(2, "0");
-            return (
-              <div
-                key={z.id}
-                className="flex items-stretch group"
-                style={{ border: "1px solid #1E1E2A", backgroundColor: "#0F0F18" }}
-              >
-                {/* Side selector — left half / right half */}
-                <button
-                  onClick={() => selectZone(`left-${z.id}`)}
-                  className="flex items-center gap-2 flex-1 px-2 py-1.5 text-left transition-colors"
-                  style={{
-                    color: hidden ? "#444" : "#C5C5D0",
-                    opacity: hidden ? 0.4 : 1,
-                    borderRight: "1px solid #1E1E2A",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = `${accent}08`; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; }}
-                  title={`Sélectionner ${z.label} (gauche)`}
-                >
-                  <span
-                    className="text-[8px] font-mono px-1 py-px"
-                    style={{ backgroundColor: isHF ? "#1A1A28" : `${accent}25`, color: isHF ? "#888" : accent, minWidth: 18, textAlign: "center" }}
-                  >{num}</span>
-                  <span className="text-[9px] font-mono uppercase flex-1 truncate" style={{ letterSpacing: "0.08em" }}>
-                    {z.label}
-                  </span>
-                  <span className="text-[8px] font-mono" style={{ color: "#666" }}>L</span>
-                </button>
-                <button
-                  onClick={() => selectZone(`right-${z.id}`)}
-                  className="px-2 py-1.5 transition-colors text-[8px] font-mono"
-                  style={{ color: "#666", borderRight: "1px solid #1E1E2A" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = `${accent}08`; e.currentTarget.style.color = accent; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "transparent"; e.currentTarget.style.color = "#666"; }}
-                  title={`Sélectionner ${z.label} (droite)`}
-                >R</button>
-                {/* % */}
-                <div
-                  className="flex items-center justify-center px-2 text-[9px] font-mono"
-                  style={{ color: hidden ? "#444" : "#888", minWidth: 36 }}
-                >
-                  {hidden ? "—" : `${pct}%`}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        <ZoneList
+          title="Page gauche"
+          side="left"
+          sideZones={zones.left}
+          onAdd={() => addZone("left", lastLeft)}
+          onSelect={(id) => selectZone(`left-${id}`)}
+          accent={accent}
+          hideHeader={hideHeader}
+          hideFooter={hideFooter}
+        />
+        <div style={{ height: 8 }} />
+        <ZoneList
+          title="Page droite"
+          side="right"
+          sideZones={zones.right}
+          onAdd={() => addZone("right", lastRight)}
+          onSelect={(id) => selectZone(`right-${id}`)}
+          accent={accent}
+          hideHeader={hideHeader}
+          hideFooter={hideFooter}
+        />
       </Section>
 
       {/* Font Presets */}
@@ -173,6 +135,80 @@ export default function EmptyInspector({ theme }: { theme: ArtDirection }) {
           <div><kbd style={kbdStyle}>Esc</kbd> Désélectionner</div>
         </div>
       </details>
+    </div>
+  );
+}
+
+function ZoneList({
+  title, side, sideZones, onAdd, onSelect, accent, hideHeader, hideFooter,
+}: {
+  title: string;
+  side: "left" | "right";
+  sideZones: { id: string; label: string; heightRatio: number }[];
+  onAdd: () => void;
+  onSelect: (id: string) => void;
+  accent: string;
+  hideHeader: boolean;
+  hideFooter: boolean;
+}) {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-[8px] font-mono uppercase" style={{ color: "#888", letterSpacing: "0.14em" }}>
+          {title} ({sideZones.length})
+        </span>
+        <button
+          onClick={onAdd}
+          className="flex items-center gap-1 text-[7px] font-mono uppercase px-1.5 py-0.5"
+          style={{ border: `1px solid ${accent}40`, color: accent, backgroundColor: `${accent}10`, letterSpacing: "0.1em" }}
+          title={`Ajouter une section (${title})`}
+        >
+          <IconPlus size={9} />
+          + Section
+        </button>
+      </div>
+      <div className="flex flex-col gap-px">
+        {sideZones.map((z, i) => {
+          const isHF = z.id === "header" || z.id === "footer";
+          const hidden = (z.id === "header" && hideHeader) || (z.id === "footer" && hideFooter);
+          const pct = Math.round(z.heightRatio * 100);
+          const num = isHF ? (z.id === "header" ? "H" : "F") : String(i).padStart(2, "0");
+          return (
+            <button
+              key={z.id}
+              onClick={() => onSelect(z.id)}
+              className="flex items-stretch group text-left transition-colors"
+              style={{
+                border: "1px solid #1E1E2A",
+                backgroundColor: "#0F0F18",
+                color: hidden ? "#444" : "#C5C5D0",
+                opacity: hidden ? 0.4 : 1,
+              }}
+              title={`Sélectionner ${z.label} (${side})`}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = `${accent}08`; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#0F0F18"; }}
+            >
+              <span
+                className="flex items-center gap-2 flex-1 px-2 py-1.5"
+              >
+                <span
+                  className="text-[8px] font-mono px-1 py-px"
+                  style={{ backgroundColor: isHF ? "#1A1A28" : `${accent}25`, color: isHF ? "#888" : accent, minWidth: 18, textAlign: "center" }}
+                >{num}</span>
+                <span className="text-[9px] font-mono uppercase flex-1 truncate" style={{ letterSpacing: "0.08em" }}>
+                  {z.label}
+                </span>
+              </span>
+              <span
+                className="flex items-center justify-center px-2 text-[9px] font-mono"
+                style={{ color: hidden ? "#444" : "#888", minWidth: 36 }}
+              >
+                {hidden ? "—" : `${pct}%`}
+              </span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

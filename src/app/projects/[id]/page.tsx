@@ -23,7 +23,7 @@ import SmartToolbar from "@/components/app/SmartToolbar";
 import ContextInspector from "@/components/app/ContextInspector";
 import { AppMode } from "@/components/app/ModeSwitcher";
 import type {
-  LayoutContent, LayoutType, BoxStyle, ImageData, ChartConfig, Page,
+  LayoutContent, LayoutType, BoxStyle, ImageData, ChartConfig, Page, PageZones,
 } from "@/data/types";
 
 type ColorKey = keyof Omit<ColorPalette, "cmyk">;
@@ -43,13 +43,30 @@ function dbToEditorState(
   const pageOrder = sorted.map((p) => p.id);
   const pages: Record<string, Page> = {};
 
+  // Migrate zones from possible legacy shape (SectionZone[]) to { left, right }.
+  const hydrateZones = (raw: unknown): PageZones => {
+    if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+      const obj = raw as { left?: unknown; right?: unknown };
+      const left  = Array.isArray(obj.left)  && obj.left.length  > 0 ? obj.left  as SectionZone[] : SPREAD_ZONES.map((z) => ({ ...z }));
+      const right = Array.isArray(obj.right) && obj.right.length > 0 ? obj.right as SectionZone[] : SPREAD_ZONES.map((z) => ({ ...z }));
+      return { left, right };
+    }
+    if (Array.isArray(raw) && raw.length > 0) {
+      // Legacy: single shared array → clone to both sides
+      const clone = (raw as SectionZone[]).map((z) => ({ ...z }));
+      return { left: clone, right: clone.map((z) => ({ ...z })) };
+    }
+    return {
+      left:  SPREAD_ZONES.map((z) => ({ ...z })),
+      right: SPREAD_ZONES.map((z) => ({ ...z })),
+    };
+  };
+
   for (const p of sorted) {
     pages[p.id] = {
       id:              p.id,
       name:            p.name,
-      zones:           (Array.isArray(p.zones) && (p.zones as unknown[]).length > 0)
-                         ? (p.zones as SectionZone[])
-                         : SPREAD_ZONES.map((z) => ({ ...z })),
+      zones:           hydrateZones(p.zones),
       contentStore:    ((p.contentStore as Record<string, LayoutContent>) ?? {}),
       layoutOverrides: ((p.layoutOverrides as Record<string, LayoutType>) ?? {}),
       boxStyles:       ((p.boxStyles as Record<string, Partial<BoxStyle>>) ?? {}),
@@ -95,12 +112,24 @@ export default function EditorPage() {
 
   // DB load — source of truth
   const [projectLoaded, setProjectLoaded] = useState(false);
+  // Setup guide: only shown the first time we open a fresh project (computed once at load).
+  const [setupGuideActive, setSetupGuideActive] = useState(false);
   useEffect(() => {
     if (!projectId) return;
     fetch(`/api/projects/${projectId}`)
       .then((r) => r.ok ? r.json() : Promise.reject())
       .then(({ project, pages }) => {
-        editor.rehydrate(dbToEditorState(project, pages));
+        const next = dbToEditorState(project, pages);
+        editor.rehydrate(next);
+        const fresh =
+          next.activeThemeId === defaultTheme.id &&
+          next.activeFontPresetId === null &&
+          Object.keys(next.colorOverrides).length === 0 &&
+          Object.values(next.pages).every((p) => Object.keys(p.contentStore).length === 0);
+        if (fresh) {
+          setMode("design-system");
+          setSetupGuideActive(true);
+        }
         setProjectLoaded(true);
       })
       .catch(() => setProjectLoaded(true));
@@ -183,6 +212,11 @@ export default function EditorPage() {
     if (selection.kind && mode !== "layout") setMode("layout");
   }, [selection.kind]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Setup guide ends as soon as the user leaves the design-system mode for any reason.
+  useEffect(() => {
+    if (setupGuideActive && mode !== "design-system") setSetupGuideActive(false);
+  }, [mode, setupGuideActive]);
+
   // ─── Editor context value ─────────────────────────────────────────────────
   const cur = editor.currentPage;
   const editorContextValue = useMemo(() => ({
@@ -191,7 +225,7 @@ export default function EditorPage() {
     boxStyles:       cur?.boxStyles       ?? {},
     images:          cur?.images          ?? {},
     chartConfigs:    cur?.chartConfigs    ?? {},
-    zones:           cur?.zones           ?? [],
+    zones:           cur?.zones           ?? { left: [], right: [] },
     currentPageId:   editor.state.currentPageId,
     pages:           editor.orderedPages,
     hideHeader:      cur?.hideHeader ?? false,
@@ -219,7 +253,6 @@ export default function EditorPage() {
     renamePage: editor.renamePage,
     activeFontPresetId: editor.state.activeFontPresetId,
     setFontPreset: editor.setFontPreset,
-    loadTemplate: editor.loadTemplate,
     resetProject: editor.resetProject,
   }), [cur, editor, selection, selectZone, selectSlot, clearSelection]);
 
@@ -265,30 +298,37 @@ export default function EditorPage() {
             >
               <Spread
                 theme={editor.mergedTheme}
-                zones={cur?.zones ?? []}
+                zonesLeft={cur?.zones.left   ?? []}
+                zonesRight={cur?.zones.right ?? []}
                 onZonesChange={editor.setZones}
                 showGrid={editor.state.showGrid || showLabels}
               />
             </CanvasStage>
           }
           panel={
-            <SmartToolbar
-              mode={mode}
-              theme={editor.mergedTheme}
-              activeThemeId={editor.state.activeThemeId}
-              colorOverrides={editor.state.colorOverrides}
-              onSelectTheme={editor.setTheme}
-              onColorChange={(k: ColorKey, v: string) => editor.setColor(k, v)}
-              onResetAllColors={editor.resetAllColors}
-              pageSide={pageSide}
-              onPageSideChange={setPageSide}
-              showLabels={showLabels}     onToggleLabels={setShowLabels}
-              showSafeArea={showSafeArea} onToggleSafeArea={setSafeArea}
-              showBleed={showBleed}       onToggleBleed={setShowBleed}
-              onExport={() => setExportOpen(true)}
-            />
+            selection.kind && mode !== "print-preview" ? (
+              <ContextInspector theme={editor.mergedTheme} />
+            ) : (
+              <SmartToolbar
+                mode={mode}
+                theme={editor.mergedTheme}
+                activeThemeId={editor.state.activeThemeId}
+                colorOverrides={editor.state.colorOverrides}
+                onSelectTheme={editor.setTheme}
+                onColorChange={(k: ColorKey, v: string) => editor.setColor(k, v)}
+                onResetAllColors={editor.resetAllColors}
+                pageSide={pageSide}
+                onPageSideChange={setPageSide}
+                showLabels={showLabels}     onToggleLabels={setShowLabels}
+                showSafeArea={showSafeArea} onToggleSafeArea={setSafeArea}
+                showBleed={showBleed}       onToggleBleed={setShowBleed}
+                onExport={() => setExportOpen(true)}
+                projectId={projectId}
+                setupGuideActive={setupGuideActive}
+                onExitSetup={() => { setSetupGuideActive(false); setMode("layout"); }}
+              />
+            )
           }
-          inspector={<ContextInspector theme={editor.mergedTheme} />}
         />
 
         {exportOpen && (

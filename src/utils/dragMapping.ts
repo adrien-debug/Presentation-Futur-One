@@ -1,4 +1,4 @@
-import { ContentDragKind, LayoutType, LayoutContent, KpiItem } from "@/data/types";
+import { ContentDragKind, LayoutType, LayoutContent, KpiItem, ImageData } from "@/data/types";
 
 interface ApplyContext {
   zoneKey: string;
@@ -6,6 +6,7 @@ interface ApplyContext {
   setLayout: (key: string, layout: LayoutType) => void;
   updateContent: (key: string, field: keyof LayoutContent, value: unknown) => void;
   setChartConfig: (slotId: string, cfg: { type?: string; values?: number[]; labels?: string[] }) => void;
+  setImage?: (slotId: string, image: Partial<ImageData>) => void;
 }
 
 /**
@@ -13,7 +14,7 @@ interface ApplyContext {
  * Auto-switches layout when needed (silently, undoable).
  */
 export function applyContentToZone(payload: ContentDragKind, ctx: ApplyContext): void {
-  const { zoneKey, currentLayout, setLayout, updateContent, setChartConfig } = ctx;
+  const { zoneKey, currentLayout, setLayout, updateContent, setChartConfig, setImage } = ctx;
 
   switch (payload.kind) {
     case "institutional-title": {
@@ -59,6 +60,15 @@ export function applyContentToZone(payload: ContentDragKind, ctx: ApplyContext):
       if (currentLayout !== "quote") setLayout(zoneKey, "quote");
       updateContent(zoneKey, "quoteText", payload.text);
       updateContent(zoneKey, "quoteAttribution", payload.attribution);
+      break;
+    }
+    case "image-asset": {
+      // Pick the canonical image slot for the active layout, or force image-full.
+      const layoutsWithImage: LayoutType[] = ["image-full", "image-text", "image-grid"];
+      const layout = layoutsWithImage.includes(currentLayout) ? currentLayout : "image-full";
+      if (layout !== currentLayout) setLayout(zoneKey, layout);
+      const slotId = layout === "image-grid" ? `${zoneKey}-image-grid-0` : `${zoneKey}-image-main`;
+      setImage?.(slotId, { src: payload.src });
       break;
     }
   }

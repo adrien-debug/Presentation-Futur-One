@@ -8,8 +8,10 @@ import PageContext from "./PageContext";
 
 interface SpreadProps {
   theme: ArtDirection;
-  zones: SectionZone[];
-  onZonesChange: (zones: SectionZone[]) => void;
+  /** Independent vertical grids per side. */
+  zonesLeft:  SectionZone[];
+  zonesRight: SectionZone[];
+  onZonesChange: (side: "left" | "right", zones: SectionZone[]) => void;
   leftPage?: React.ReactNode;
   rightPage?: React.ReactNode;
   showGrid?: boolean;
@@ -27,7 +29,8 @@ function clampRatio(r: number) {
 
 export default function Spread({
   theme,
-  zones,
+  zonesLeft,
+  zonesRight,
   onZonesChange,
   leftPage,
   rightPage,
@@ -37,15 +40,17 @@ export default function Spread({
   const [scale, setScale] = useState(1);
   const { hideHeader, hideFooter } = useEditor();
 
-  // Filter out hidden zones (header/footer when toggled off)
-  const visibleZones = useMemo(
-    () => zones.filter((z) =>
-      !(z.id === "header" && hideHeader) &&
-      !(z.id === "footer" && hideFooter)
-    ),
-    [zones, hideHeader, hideFooter]
+  const filterVisible = useCallback(
+    (zones: SectionZone[]) =>
+      zones.filter((z) =>
+        !(z.id === "header" && hideHeader) &&
+        !(z.id === "footer" && hideFooter)
+      ),
+    [hideHeader, hideFooter]
   );
-  const visibleTotal = visibleZones.reduce((s, z) => s + z.heightRatio, 0) || 1;
+
+  const visibleLeft  = useMemo(() => filterVisible(zonesLeft),  [filterVisible, zonesLeft]);
+  const visibleRight = useMemo(() => filterVisible(zonesRight), [filterVisible, zonesRight]);
 
   // Measure wrapper and compute scale factor
   useEffect(() => {
@@ -58,19 +63,28 @@ export default function Spread({
     return () => ro.disconnect();
   }, []);
 
-  // Boundaries (cumulative fraction in *visible* space, 0→1)
-  const boundaries = visibleZones.slice(0, -1).reduce<number[]>((acc, zone) => {
-    const prev = acc.length > 0 ? acc[acc.length - 1] : 0;
-    return [...acc, prev + zone.heightRatio / visibleTotal];
+  // Build cumulative boundaries for one side (visible-space, 0→1)
+  const computeBoundaries = useCallback((visibleZones: SectionZone[]) => {
+    const total = visibleZones.reduce((s, z) => s + z.heightRatio, 0) || 1;
+    return visibleZones.slice(0, -1).reduce<number[]>((acc, zone) => {
+      const prev = acc.length > 0 ? acc[acc.length - 1] : 0;
+      return [...acc, prev + zone.heightRatio / total];
+    }, []);
   }, []);
 
-  const handleDragStart = useCallback(
-    (e: React.MouseEvent, boundaryIndex: number) => {
+  const boundariesLeft  = useMemo(() => computeBoundaries(visibleLeft),  [computeBoundaries, visibleLeft]);
+  const boundariesRight = useMemo(() => computeBoundaries(visibleRight), [computeBoundaries, visibleRight]);
+
+  const makeDragHandler = useCallback(
+    (side: "left" | "right") => (e: React.MouseEvent, boundaryIndex: number) => {
       e.preventDefault();
       const el = wrapperRef.current;
       if (!el) return;
 
-      // Drag adjusts the two adjacent VISIBLE zones; hidden zones keep their ratios
+      const zones = side === "left" ? zonesLeft : zonesRight;
+      const visibleZones = side === "left" ? visibleLeft : visibleRight;
+      const visibleTotal = visibleZones.reduce((s, z) => s + z.heightRatio, 0) || 1;
+
       const idA = visibleZones[boundaryIndex]?.id;
       const idB = visibleZones[boundaryIndex + 1]?.id;
       const idxA = zones.findIndex((z) => z.id === idA);
@@ -84,7 +98,6 @@ export default function Spread({
       const startB = zones[idxB].heightRatio;
 
       const onMouseMove = (mv: MouseEvent) => {
-        // Delta in visual space (visible canvas) → convert to absolute heightRatio delta
         const deltaVisual = (mv.clientY - startY) / safeH;
         const deltaRatio = deltaVisual * visibleTotal;
         const newA = clampRatio(startA + deltaRatio);
@@ -95,9 +108,8 @@ export default function Spread({
           if (i === idxB) return { ...z, heightRatio: newB };
           return z;
         });
-        // Renormalize all (preserves relative weights)
         const total = newZones.reduce((s, z) => s + z.heightRatio, 0);
-        onZonesChange(newZones.map((z) => ({ ...z, heightRatio: z.heightRatio / total })));
+        onZonesChange(side, newZones.map((z) => ({ ...z, heightRatio: z.heightRatio / total })));
       };
 
       const onMouseUp = () => {
@@ -112,101 +124,110 @@ export default function Spread({
       window.addEventListener("mousemove", onMouseMove);
       window.addEventListener("mouseup", onMouseUp);
     },
-    [zones, visibleZones, visibleTotal, onZonesChange]
+    [zonesLeft, zonesRight, visibleLeft, visibleRight, onZonesChange]
   );
+
+  const handleDragLeft  = useMemo(() => makeDragHandler("left"),  [makeDragHandler]);
+  const handleDragRight = useMemo(() => makeDragHandler("right"), [makeDragHandler]);
 
   return (
     <div
       ref={wrapperRef}
       className="spread-wrapper relative overflow-hidden"
-      style={{
-        width: "100%",
-        height: "100%",
-        backgroundColor: theme.colors.background,
-      }}
+      style={{ width: "100%", height: "100%", backgroundColor: theme.colors.background }}
     >
-        {/* ── SCALED CONTENT ─────────────────────────────────────────────── */}
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            width: NATURAL_W,
-            height: NATURAL_H,
-            transform: `scale(${scale})`,
-            transformOrigin: "top left",
-            display: "flex",
-            fontFamily: theme.typography.bodyFont,
-          }}
-        >
-          {/* Bleed outline */}
-          {showGrid && (
-            <div
-              className="absolute inset-0 pointer-events-none z-50"
-              style={{ boxShadow: "inset 0 0 0 2px rgba(255,0,0,0.12)" }}
-            />
-          )}
+      <div
+        style={{
+          position: "absolute", top: 0, left: 0,
+          width: NATURAL_W, height: NATURAL_H,
+          transform: `scale(${scale})`, transformOrigin: "top left",
+          display: "flex", fontFamily: theme.typography.bodyFont,
+        }}
+      >
+        {showGrid && (
+          <div className="absolute inset-0 pointer-events-none z-50"
+            style={{ boxShadow: "inset 0 0 0 2px rgba(255,0,0,0.12)" }} />
+        )}
+        {showGrid && (
+          <div className="absolute left-1/2 top-0 bottom-0 w-px bg-red-500/20 z-40 pointer-events-none" />
+        )}
 
-          {/* Center gutter */}
-          {showGrid && (
-            <div className="absolute left-1/2 top-0 bottom-0 w-px bg-red-500/20 z-40 pointer-events-none" />
-          )}
+        {/* LEFT PAGE — independent grid */}
+        <div style={{ flex: 1, position: "relative", overflow: "hidden", height: "100%" }}>
+          <PageContext theme={theme} side="left" zones={zonesLeft} showGrid={showGrid}>
+            {leftPage}
+          </PageContext>
 
-          {/* LEFT PAGE */}
-          <div style={{ flex: 1, position: "relative", overflow: "hidden", height: "100%" }}>
-            <PageContext theme={theme} side="left" zones={zones} showGrid={showGrid}>
-              {leftPage}
-            </PageContext>
-          </div>
-
-          {/* RIGHT PAGE */}
-          <div style={{ flex: 1, position: "relative", overflow: "hidden", height: "100%" }}>
-            <PageContext theme={theme} side="right" zones={zones} showGrid={showGrid}>
-              {rightPage}
-            </PageContext>
-          </div>
-
-          {/* ── DRAG HANDLES (inside scaled div — coords stay correct) ─── */}
-          {boundaries.map((cumRatio, i) => {
+          {/* drag handles for left side only */}
+          {boundariesLeft.map((cumRatio, i) => {
             const topPct = (INSET + cumRatio * (1 - 2 * INSET)) * 100;
             return (
               <div
-                key={i}
+                key={`L-${i}`}
                 className="absolute z-50 group"
                 style={{
-                  left: 0, right: 0,
-                  top: `${topPct}%`,
-                  height: "12px",
-                  transform: "translateY(-50%)",
-                  cursor: "row-resize",
+                  left: 0, right: 0, top: `${topPct}%`,
+                  height: "12px", transform: "translateY(-50%)", cursor: "row-resize",
                 }}
-                onMouseDown={(e) => handleDragStart(e, i)}
+                onMouseDown={(e) => handleDragLeft(e, i)}
               >
-                <div
-                  className="absolute inset-x-0 top-1/2 -translate-y-1/2 transition-all duration-100"
-                  style={{ height: "1px", backgroundColor: `${theme.colors.accent}35` }}
-                />
-                <div
-                  className="absolute inset-x-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
-                  style={{ height: "2px", backgroundColor: theme.colors.accent }}
-                />
-                <div
-                  className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2
-                             opacity-0 group-hover:opacity-100 transition-opacity
-                             px-2 py-1 pointer-events-none whitespace-nowrap"
+                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 transition-all duration-100"
+                  style={{ height: "1px", backgroundColor: `${theme.colors.accent}35` }} />
+                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ height: "2px", backgroundColor: theme.colors.accent }} />
+                <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2
+                  opacity-0 group-hover:opacity-100 transition-opacity
+                  px-2 py-1 pointer-events-none whitespace-nowrap"
                   style={{
-                    fontSize: "11px",
-                    fontFamily: "monospace",
-                    backgroundColor: theme.colors.accent,
-                    color: theme.colors.background,
+                    fontSize: "11px", fontFamily: "monospace",
+                    backgroundColor: theme.colors.accent, color: theme.colors.background,
                   }}
                 >
-                  {visibleZones[i].label} {Math.round(visibleZones[i].heightRatio * 100)}% · {visibleZones[i + 1].label} {Math.round(visibleZones[i + 1].heightRatio * 100)}%
+                  L · {visibleLeft[i].label} {Math.round(visibleLeft[i].heightRatio * 100)}% · {visibleLeft[i + 1].label} {Math.round(visibleLeft[i + 1].heightRatio * 100)}%
                 </div>
               </div>
             );
           })}
         </div>
+
+        {/* RIGHT PAGE — independent grid */}
+        <div style={{ flex: 1, position: "relative", overflow: "hidden", height: "100%" }}>
+          <PageContext theme={theme} side="right" zones={zonesRight} showGrid={showGrid}>
+            {rightPage}
+          </PageContext>
+
+          {/* drag handles for right side only */}
+          {boundariesRight.map((cumRatio, i) => {
+            const topPct = (INSET + cumRatio * (1 - 2 * INSET)) * 100;
+            return (
+              <div
+                key={`R-${i}`}
+                className="absolute z-50 group"
+                style={{
+                  left: 0, right: 0, top: `${topPct}%`,
+                  height: "12px", transform: "translateY(-50%)", cursor: "row-resize",
+                }}
+                onMouseDown={(e) => handleDragRight(e, i)}
+              >
+                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 transition-all duration-100"
+                  style={{ height: "1px", backgroundColor: `${theme.colors.accent}35` }} />
+                <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  style={{ height: "2px", backgroundColor: theme.colors.accent }} />
+                <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2
+                  opacity-0 group-hover:opacity-100 transition-opacity
+                  px-2 py-1 pointer-events-none whitespace-nowrap"
+                  style={{
+                    fontSize: "11px", fontFamily: "monospace",
+                    backgroundColor: theme.colors.accent, color: theme.colors.background,
+                  }}
+                >
+                  R · {visibleRight[i].label} {Math.round(visibleRight[i].heightRatio * 100)}% · {visibleRight[i + 1].label} {Math.round(visibleRight[i + 1].heightRatio * 100)}%
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 }

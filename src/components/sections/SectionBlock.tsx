@@ -35,7 +35,7 @@ interface SectionBlockProps {
 
 export default function SectionBlock({ theme, zoneId, label, side, showGrid = false }: SectionBlockProps) {
   const ed = useEditor();
-  const { contentStore, layoutOverrides, updateContent, setLayout, setChartConfig, selection, selectZone } = ed;
+  const { contentStore, layoutOverrides, updateContent, setLayout, setChartConfig, setImage, selection, selectZone } = ed;
   const { session: dragSession } = useDrag();
   const [dragOver, setDragOver] = useState(false);
   const zoneRef = useRef<HTMLDivElement>(null);
@@ -84,6 +84,7 @@ export default function SectionBlock({ theme, zoneId, label, side, showGrid = fa
           setLayout,
           updateContent,
           setChartConfig: (sid, cfg) => setChartConfig(sid, cfg as Parameters<typeof setChartConfig>[1]),
+          setImage,
         });
       } catch { /* ignore malformed payload */ }
     }

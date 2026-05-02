@@ -39,38 +39,40 @@ export default function ZoneInspector({ theme, zoneKey }: ZoneInspectorProps) {
   const accent = theme.colors.accent;
 
   // Resolve zone identity
-  const [side, ...rest] = zoneKey.split("-");
+  const [sideRaw, ...rest] = zoneKey.split("-");
+  const side: "left" | "right" = sideRaw === "right" ? "right" : "left";
   const zoneId = rest.join("-");
-  const zoneIdx = zones.findIndex((z) => z.id === zoneId);
-  const zone = zones[zoneIdx];
+  const sideZones = zones[side];
+  const zoneIdx = sideZones.findIndex((z) => z.id === zoneId);
+  const zone = sideZones[zoneIdx];
   if (!zone) return null;
 
   const isHeader = zoneId === "header";
   const isFooter = zoneId === "footer";
   const isHF = isHeader || isFooter;
-  const sectionsCount = zones.filter((z) => z.id !== "header" && z.id !== "footer").length;
-  const lastIdx = zones.length - 1;
+  const sectionsCount = sideZones.filter((z) => z.id !== "header" && z.id !== "footer").length;
+  const lastIdx = sideZones.length - 1;
 
-  const otherSide = side === "left" ? "right" : "left";
+  const otherSide: "left" | "right" = side === "left" ? "right" : "left";
 
   const currentLayout: LayoutType = (layoutOverrides[zoneKey] ?? "text-full") as LayoutType;
   const box: BoxStyle = { ...DEFAULT_BOX_STYLE, ...(boxStyles[zoneKey] ?? {}) };
   const updateBox = (patch: Partial<BoxStyle>) => setBoxStyle(zoneKey, patch);
 
-  // Height stepper — clamps + redistributes among others
+  // Height stepper — clamps + redistributes among others (this side only)
   const setHeight = (newRatio: number) => {
     const clamped = Math.min(ZONE.MAX_RATIO, Math.max(ZONE.MIN_RATIO, newRatio));
     const delta = clamped - zone.heightRatio;
-    const others = zones.filter((_, i) => i !== zoneIdx);
+    const others = sideZones.filter((_, i) => i !== zoneIdx);
     const othersTotal = others.reduce((s, z) => s + z.heightRatio, 0);
     if (othersTotal <= 0) return;
-    const updated = zones.map((z, i) => {
+    const updated = sideZones.map((z, i) => {
       if (i === zoneIdx) return { ...z, heightRatio: clamped };
       const share = z.heightRatio / othersTotal;
       return { ...z, heightRatio: Math.max(ZONE.MIN_RATIO, z.heightRatio - delta * share) };
     });
     const sum = updated.reduce((s, z) => s + z.heightRatio, 0);
-    setZones(updated.map((z) => ({ ...z, heightRatio: z.heightRatio / sum })));
+    setZones(side, updated.map((z) => ({ ...z, heightRatio: z.heightRatio / sum })));
   };
   const pct = Math.round(zone.heightRatio * 100);
 
@@ -160,7 +162,7 @@ export default function ZoneInspector({ theme, zoneKey }: ZoneInspectorProps) {
         <Section label="Position" theme={theme}>
           <div className="flex gap-1">
             <PosBtn
-              onClick={() => reorderZones(zoneIdx, zoneIdx - 1)}
+              onClick={() => reorderZones(side, zoneIdx, zoneIdx - 1)}
               disabled={zoneIdx <= 1}
               title="Monter"
               accent={accent}
@@ -172,7 +174,7 @@ export default function ZoneInspector({ theme, zoneKey }: ZoneInspectorProps) {
               <span>Monter</span>
             </PosBtn>
             <PosBtn
-              onClick={() => reorderZones(zoneIdx, zoneIdx + 1)}
+              onClick={() => reorderZones(side, zoneIdx, zoneIdx + 1)}
               disabled={zoneIdx >= lastIdx - 1}
               title="Descendre"
               accent={accent}
@@ -187,7 +189,7 @@ export default function ZoneInspector({ theme, zoneKey }: ZoneInspectorProps) {
           {sectionsCount > 1 && (
             <button
               onClick={() => {
-                if (confirm(`Supprimer "${zone.label}" ?`)) removeZone(zoneId);
+                if (confirm(`Supprimer "${zone.label}" ?`)) removeZone(side, zoneId);
               }}
               className="flex items-center justify-center gap-1.5 mt-1 py-1.5 text-[9px] font-mono uppercase transition-colors"
               style={{ border: "1px solid #5A2A2A", color: "#E07070", backgroundColor: "#1A0F12", letterSpacing: "0.1em" }}

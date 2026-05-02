@@ -51,7 +51,8 @@ export async function POST(req: Request) {
       projectId:  project.id,
       orderIndex: i,
       name:       i === 0 ? (pageNames[pageCount] ?? "Page 1") : `Page ${i + 1}`,
-      zones:      SPREAD_ZONES as unknown as object[],
+      // Independent grids per side (cloned default).
+      zones:      { left: SPREAD_ZONES, right: SPREAD_ZONES } as unknown as object,
     }))
   );
 

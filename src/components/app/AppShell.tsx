@@ -6,7 +6,6 @@ interface AppShellProps {
   topbar:    React.ReactNode;
   canvas:    React.ReactNode;
   panel:     React.ReactNode;
-  inspector?: React.ReactNode;
   showPanel?: boolean;
 }
 
@@ -16,16 +15,12 @@ interface AppShellProps {
  * On narrow viewports the panel stacks under the canvas (handled in globals.css).
  */
 export default function AppShell({
-  topbar, canvas, panel, inspector, showPanel = true,
+  topbar, canvas, panel, showPanel = true,
 }: AppShellProps) {
   return (
     <div className={`app-shell ${showPanel ? "" : "app-shell--no-panel"}`}>
       <div className="app-shell__topbar">{topbar}</div>
-      <div className="app-shell__canvas relative">
-        {canvas}
-        {/* ContextInspector floats over canvas/panel intersection */}
-        {inspector}
-      </div>
+      <div className="app-shell__canvas">{canvas}</div>
       {showPanel && <div className="app-shell__panel">{panel}</div>}
     </div>
   );

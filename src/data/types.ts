@@ -151,10 +151,16 @@ export interface LayoutContent {
 // ─── PAGE (multi-page support) ────────────────────────────────────────────────
 import type { SectionZone } from "@/design-system";
 
+export interface PageZones {
+  left:  SectionZone[];
+  right: SectionZone[];
+}
+
 export interface Page {
   id: string;
   name: string;
-  zones: SectionZone[];
+  /** Independent vertical grid per side. Each side can have its own row count + heightRatios. */
+  zones: PageZones;
   contentStore:    Record<string, LayoutContent>;
   layoutOverrides: Record<string, LayoutType>;
   boxStyles:       Record<string, Partial<BoxStyle>>;
@@ -180,7 +186,8 @@ export type ContentDragKind =
   | { kind: "text-block"; name: string; content: string }
   | { kind: "kpi-set"; kpis: KpiItem[] }
   | { kind: "chart-idea"; chartType: ChartType; values: number[]; labels: string[]; label: string }
-  | { kind: "quote"; text: string; attribution: string };
+  | { kind: "quote"; text: string; attribution: string }
+  | { kind: "image-asset"; src: string };
 
 export interface DragSession {
   type: "layout" | "content";
@@ -286,14 +293,3 @@ export const BOX_STYLE_PRESETS: BoxStylePreset[] = [
   },
 ];
 
-// ─── TEMPLATES ────────────────────────────────────────────────────────────────
-import type { ThemeId } from "@/design-system";
-
-export interface Template {
-  id: string;
-  name: string;
-  description: string;
-  themeId: ThemeId;
-  pages: Page[];
-  tags: ("tech" | "investor" | "corporate" | "event" | "product")[];
-}

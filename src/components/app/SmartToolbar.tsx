@@ -28,6 +28,13 @@ interface SmartToolbarProps {
 
   // Print mode
   onExport: () => void;
+
+  // Assets mode
+  projectId?: string;
+
+  // Design System onboarding guide
+  setupGuideActive?: boolean;
+  onExitSetup?: () => void;
 }
 
 export default function SmartToolbar(props: SmartToolbarProps) {
@@ -72,10 +79,12 @@ export default function SmartToolbar(props: SmartToolbarProps) {
             onSelectTheme={props.onSelectTheme}
             onColorChange={props.onColorChange}
             onResetAllColors={props.onResetAllColors}
+            setupGuideActive={props.setupGuideActive}
+            onExitSetup={props.onExitSetup}
           />
         )}
         {props.mode === "assets" && (
-          <AssetsModePanel theme={props.theme} />
+          <AssetsModePanel theme={props.theme} projectId={props.projectId} />
         )}
         {props.mode === "print-preview" && (
           <PrintPreviewModePanel theme={props.theme} onExport={props.onExport} />

@@ -10,31 +10,31 @@ interface Props {
   theme: ArtDirection;
 }
 
+const KIND_LABELS: Record<string, string> = {
+  zone:  "Section",
+  image: "Image",
+  chart: "Graphique",
+  text:  "Texte",
+  kpi:   "KPI",
+};
+
 /**
- * ContextInspector — only renders when the user has selected something on the canvas.
- * Wraps the existing Inspector component but in a more compact, contextual frame.
- * Lives at the bottom of the right panel, above SmartToolbar fades or replaces it.
+ * ContextInspector — fills the right panel when something is selected.
+ * Renders inline (not floating). Used as a swap-in replacement for SmartToolbar.
  */
 export default function ContextInspector({ theme }: Props) {
   const { selection, clearSelection } = useEditor();
   const accent = theme.colors.accent;
-
-  if (!selection.kind) return null;
+  const label = selection.kind ? (KIND_LABELS[selection.kind] ?? selection.kind) : "";
 
   return (
-    <div
-      className="flex flex-col absolute right-0 bottom-0 no-export"
+    <aside
+      className="flex flex-col h-full no-export"
       style={{
-        width: "min(360px, 28vw)",
-        maxHeight: "60dvh",
+        borderLeft: "1px solid var(--border-subtle)",
         backgroundColor: "var(--bg-panel)",
-        borderTop:  "1px solid var(--border-strong)",
-        borderLeft: "1px solid var(--border-strong)",
-        boxShadow: "0 -8px 32px rgba(0,0,0,0.4)",
-        zIndex: 40,
       }}
     >
-      {/* Header */}
       <div
         className="flex items-center justify-between px-3 py-2 border-b flex-shrink-0"
         style={{ borderColor: "var(--border-subtle)", height: 36 }}
@@ -45,7 +45,7 @@ export default function ContextInspector({ theme }: Props) {
             style={{ backgroundColor: accent, boxShadow: `0 0 6px ${accent}` }}
           />
           <span className="text-[9px] font-mono uppercase" style={{ color: accent, letterSpacing: "0.2em" }}>
-            Inspector · {selection.kind}
+            Inspector · {label}
           </span>
         </div>
         <button
@@ -59,10 +59,9 @@ export default function ContextInspector({ theme }: Props) {
         </button>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 scroll-y">
-        <Inspector theme={theme} onClose={clearSelection} />
+      <div className="flex-1 min-h-0 scroll-y">
+        <Inspector theme={theme} />
       </div>
-    </div>
+    </aside>
   );
 }
