@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+/* Print-ready base settings */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+:root {
+  --page-width: 420mm;
+  --page-height: 297mm;
+  --bleed: 3mm;
+  --margin-safe: 10mm;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #1a1a1a;
+  font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Print media query */
+@media print {
+  html, body {
+    background: white;
+    width: 420mm;
+    height: 297mm;
+  }
+  .no-print { display: none !important; }
+  .spread { page-break-inside: avoid; }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #111; }
+::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+
+/* Transition utilities */
+.theme-transition {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
