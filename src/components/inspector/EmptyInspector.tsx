@@ -4,6 +4,7 @@ import React from "react";
 import { ArtDirection } from "@/design-system";
 import { useEditor } from "@/contexts/EditorContext";
 import { IconPlus } from "@/components/ui/Icon";
+import { FONT_PRESETS, FontPresetId } from "@/design-system/font-presets";
 
 export default function EmptyInspector({ theme }: { theme: ArtDirection }) {
   const {
@@ -11,6 +12,7 @@ export default function EmptyInspector({ theme }: { theme: ArtDirection }) {
     hideHeader, hideFooter,
     toggleHeaderVisibility, toggleFooterVisibility,
     addZone, selectZone,
+    activeFontPresetId, setFontPreset,
   } = useEditor();
   const accent = theme.colors.accent;
   const currentPage = pages.find((p) => p.id === currentPageId);
@@ -113,6 +115,36 @@ export default function EmptyInspector({ theme }: { theme: ArtDirection }) {
                   {hidden ? "—" : `${pct}%`}
                 </div>
               </div>
+            );
+          })}
+        </div>
+      </Section>
+
+      {/* Font Presets */}
+      <Section label="Typographie" theme={theme}>
+        <div className="flex flex-col gap-1">
+          {FONT_PRESETS.map((preset) => {
+            const active = (preset.id === "theme-default" && !activeFontPresetId) || preset.id === activeFontPresetId;
+            return (
+              <button
+                key={preset.id}
+                onClick={() => setFontPreset(preset.id === "theme-default" ? null : preset.id as FontPresetId)}
+                className="flex flex-col gap-0.5 px-2 py-1.5 text-left transition-colors"
+                style={{
+                  border: `1px solid ${active ? accent : "#2A2A3A"}`,
+                  backgroundColor: active ? `${accent}12` : "#16161F",
+                }}
+              >
+                <span
+                  className="text-[9px] font-mono uppercase"
+                  style={{ color: active ? accent : "#C5C5D0", letterSpacing: "0.08em" }}
+                >
+                  {preset.name}
+                </span>
+                <span className="text-[7px]" style={{ color: active ? `${accent}AA` : "#555" }}>
+                  {preset.description}
+                </span>
+              </button>
             );
           })}
         </div>

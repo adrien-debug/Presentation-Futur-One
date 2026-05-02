@@ -10,9 +10,10 @@ import {
   IMAGE_TREATMENTS, DIVIDER_STYLES,
 } from "@/data/content";
 import ColorTokenEditor from "./ColorTokenEditor";
-import { IconPalette, IconPages, IconLayout, IconLibrary, IconDroplet } from "./Icon";
+import { IconPalette, IconPages, IconLibrary, IconDroplet } from "./Icon";
+import { FONT_PRESETS } from "@/design-system/font-presets";
 
-type Tab = "themes" | "pages" | "layouts" | "library" | "colors";
+type Tab = "themes" | "pages" | "library" | "colors";
 
 type ColorKey = keyof Omit<ColorPalette, "cmyk">;
 
@@ -32,7 +33,6 @@ type IconComponent = React.ComponentType<{ size?: number; className?: string }>;
 const TABS: { id: Tab; Icon: IconComponent; label: string }[] = [
   { id: "themes",  Icon: IconPalette, label: "Thèmes" },
   { id: "pages",   Icon: IconPages,   label: "Pages" },
-  { id: "layouts", Icon: IconLayout,  label: "Layouts" },
   { id: "library", Icon: IconLibrary, label: "Library" },
   { id: "colors",  Icon: IconDroplet, label: "Couleurs" },
 ];
@@ -78,7 +78,6 @@ export default function LeftRail(props: LeftRailProps) {
       <div className="overflow-y-auto" style={{ width: "clamp(180px, 18vw, 230px)" }}>
         {active === "themes"  && <ThemesPanel {...props} />}
         {active === "pages"   && <PagesTabPanel theme={theme} />}
-        {active === "layouts" && <LayoutsPanel theme={theme} />}
         {active === "library" && <LibraryPanel theme={theme} />}
         {active === "colors"  && <ColorsPanel {...props} />}
       </div>
@@ -88,21 +87,55 @@ export default function LeftRail(props: LeftRailProps) {
 
 // ─── PANELS ────────────────────────────────────────────────────────────────────
 
-function ThemesPanel({ themes, activeThemeId, colorOverrides, onSelectTheme }: LeftRailProps) {
+function ThemesPanel({ themes, activeThemeId, colorOverrides, onSelectTheme, theme }: LeftRailProps) {
+  const { activeFontPresetId, setFontPreset } = useEditor();
+  const accent = theme.colors.accent;
+
   return (
-    <div className="p-3">
-      <PanelTitle>{themes.length} Directions Artistiques</PanelTitle>
-      <div className="flex flex-col gap-1">
-        {themes.map((t) => (
-          <ThemeCard
-            key={t.id}
-            theme={t}
-            active={t.id === activeThemeId}
-            hasOverrides={t.id === activeThemeId && Object.keys(colorOverrides).length > 0}
-            onClick={() => onSelectTheme(t.id)}
-          />
-        ))}
+    <div className="p-3 flex flex-col gap-5">
+
+      {/* Font presets */}
+      <div>
+        <PanelTitle>Typographie</PanelTitle>
+        <div className="flex flex-col gap-1">
+          {FONT_PRESETS.map((fp) => {
+            const active = (activeFontPresetId ?? "theme-default") === fp.id;
+            return (
+              <button
+                key={fp.id}
+                onClick={() => setFontPreset(fp.id === "theme-default" ? null : fp.id)}
+                className="w-full text-left px-2 py-1.5 transition-all"
+                style={{
+                  border: `1px solid ${active ? accent : "#2A2A3A"}`,
+                  backgroundColor: active ? `${accent}10` : "transparent",
+                }}
+              >
+                <div className="text-[9px] font-semibold" style={{ color: active ? accent : "#CCC" }}>
+                  {fp.name}
+                </div>
+                <div className="text-[7px] mt-0.5" style={{ color: "#666" }}>{fp.description}</div>
+              </button>
+            );
+          })}
+        </div>
       </div>
+
+      {/* Color themes */}
+      <div>
+        <PanelTitle>{themes.length} Directions Artistiques</PanelTitle>
+        <div className="flex flex-col gap-1">
+          {themes.map((t) => (
+            <ThemeCard
+              key={t.id}
+              theme={t}
+              active={t.id === activeThemeId}
+              hasOverrides={t.id === activeThemeId && Object.keys(colorOverrides).length > 0}
+              onClick={() => onSelectTheme(t.id)}
+            />
+          ))}
+        </div>
+      </div>
+
     </div>
   );
 }

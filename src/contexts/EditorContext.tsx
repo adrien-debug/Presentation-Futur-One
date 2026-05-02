@@ -6,6 +6,7 @@ import {
   Page, UISelection, SlotKind, Template,
 } from "@/data/types";
 import { SectionZone } from "@/design-system";
+import { FontPresetId } from "@/design-system/font-presets";
 
 /**
  * EditorContext — exposes:
@@ -62,6 +63,10 @@ export interface EditorContextValue {
   switchPage:    (pageId: string) => void;
   renamePage:    (pageId: string, name: string) => void;
 
+  // ─── Font preset ───
+  activeFontPresetId: FontPresetId | null;
+  setFontPreset: (presetId: FontPresetId | null) => void;
+
   // ─── Bulk ───
   loadTemplate: (template: Template) => void;
   resetProject: () => void;
@@ -85,6 +90,8 @@ const EditorContext = createContext<EditorContextValue>({
   setZones: noop, addZone: noop, removeZone: noop, reorderZones: noop,
   addPage: noop, duplicatePage: noop, deletePage: noop,
   reorderPages: noop, switchPage: noop, renamePage: noop,
+  activeFontPresetId: null,
+  setFontPreset: noop,
   loadTemplate: noop, resetProject: noop,
 });
 

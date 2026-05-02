@@ -188,6 +188,104 @@ export interface DragSession {
   source: string;
 }
 
+// ─── BOX STYLE PRESETS ────────────────────────────────────────────────────────
+
+export type BoxStylePresetId =
+  | "glassmorphism"
+  | "neon-frame"
+  | "carbon-fiber"
+  | "blueprint"
+  | "hologram"
+  | "hard-edge"
+  | "gold-inlay"
+  | "ghost-card"
+  | "terminal-box"
+  | "frosted-pill"
+  | "heat-bar"
+  | "scan-line";
+
+export interface BoxStylePreset {
+  id: BoxStylePresetId;
+  name: string;
+  icon: string;
+  style: BoxStyle;
+}
+
+export const BOX_STYLE_PRESETS: BoxStylePreset[] = [
+  {
+    id: "glassmorphism",
+    name: "Glass",
+    icon: "◫",
+    style: { fill: "glass", border: "solid", borderWidth: 1, borderSides: "all", radius: "rounded", shadow: "soft", corners: "none" },
+  },
+  {
+    id: "neon-frame",
+    name: "Neon",
+    icon: "▣",
+    style: { fill: "transparent", border: "solid", borderWidth: 2, borderSides: "all", radius: "square", shadow: "neon", corners: "none" },
+  },
+  {
+    id: "carbon-fiber",
+    name: "Carbon",
+    icon: "◼",
+    style: { fill: "surfaceAlt", border: "solid", borderWidth: 1, borderSides: "all", radius: "square", shadow: "hard", corners: "none" },
+  },
+  {
+    id: "blueprint",
+    name: "Blueprint",
+    icon: "⊞",
+    style: { fill: "accentTint", border: "dashed", borderWidth: 1, borderSides: "all", radius: "square", shadow: "none", corners: "brackets" },
+  },
+  {
+    id: "hologram",
+    name: "Hologram",
+    icon: "◈",
+    style: { fill: "glass", border: "dotted", borderWidth: 1, borderSides: "all", radius: "soft", shadow: "neon", corners: "beveled" },
+  },
+  {
+    id: "hard-edge",
+    name: "Brutal",
+    icon: "▪",
+    style: { fill: "surface", border: "solid", borderWidth: 4, borderSides: "all", radius: "square", shadow: "hard", corners: "none" },
+  },
+  {
+    id: "gold-inlay",
+    name: "Gold",
+    icon: "◇",
+    style: { fill: "gradient", border: "double", borderWidth: 2, borderSides: "all", radius: "square", shadow: "soft", corners: "brackets" },
+  },
+  {
+    id: "ghost-card",
+    name: "Ghost",
+    icon: "□",
+    style: { fill: "transparent", border: "dashed", borderWidth: 1, borderSides: "all", radius: "soft", shadow: "none", corners: "none" },
+  },
+  {
+    id: "terminal-box",
+    name: "Terminal",
+    icon: "▦",
+    style: { fill: "surfaceAlt", border: "solid", borderWidth: 1, borderSides: "all", radius: "square", shadow: "inset", corners: "none" },
+  },
+  {
+    id: "frosted-pill",
+    name: "Frosted",
+    icon: "⬭",
+    style: { fill: "glass", border: "none", borderWidth: 1, borderSides: "all", radius: "rounded", shadow: "soft", corners: "none" },
+  },
+  {
+    id: "heat-bar",
+    name: "Heat",
+    icon: "▬",
+    style: { fill: "accentTint", border: "solid", borderWidth: 4, borderSides: "bottom", radius: "soft", shadow: "none", corners: "none" },
+  },
+  {
+    id: "scan-line",
+    name: "Scan",
+    icon: "≡",
+    style: { fill: "transparent", border: "dashed", borderWidth: 1, borderSides: "y", radius: "square", shadow: "none", corners: "none" },
+  },
+];
+
 // ─── TEMPLATES ────────────────────────────────────────────────────────────────
 import type { ThemeId } from "@/design-system";
 

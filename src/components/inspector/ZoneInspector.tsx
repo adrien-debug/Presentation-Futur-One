@@ -6,6 +6,7 @@ import { useEditor } from "@/contexts/EditorContext";
 import {
   ALL_LAYOUTS, BoxStyle, BorderStyle, BorderSides, FillStyle,
   ShadowStyle, CornerStyle, RadiusStyle, DEFAULT_BOX_STYLE, LayoutType,
+  BOX_STYLE_PRESETS,
 } from "@/data/types";
 import { ZONE } from "@/design-system/constants";
 import {
@@ -247,6 +248,39 @@ export default function ZoneInspector({ theme, zoneKey }: ZoneInspectorProps) {
           </button>
         }
       >
+        <SubSection label="Preset">
+          <div className="flex flex-wrap gap-1">
+            {BOX_STYLE_PRESETS.map((preset) => (
+              <button
+                key={preset.id}
+                onClick={() => setBoxStyle(zoneKey, preset.style)}
+                title={preset.name}
+                className="flex flex-col items-center justify-center gap-0.5 transition-colors"
+                style={{
+                  width: 32, height: 30,
+                  border: "1px solid #2A2A3A",
+                  backgroundColor: "transparent",
+                  color: "#999",
+                  cursor: "pointer",
+                  fontSize: 11,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = accent;
+                  e.currentTarget.style.color = accent;
+                  e.currentTarget.style.backgroundColor = `${accent}12`;
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "#2A2A3A";
+                  e.currentTarget.style.color = "#999";
+                  e.currentTarget.style.backgroundColor = "transparent";
+                }}
+              >
+                <span style={{ lineHeight: 1 }}>{preset.icon}</span>
+                <span style={{ fontSize: 5, fontFamily: "monospace", letterSpacing: "0.05em", textTransform: "uppercase" }}>{preset.name}</span>
+              </button>
+            ))}
+          </div>
+        </SubSection>
         <SubSection label="Border">
           <ChipRow>
             {BORDER_STYLES.map((b) => (

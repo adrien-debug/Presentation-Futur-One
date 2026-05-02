@@ -3,8 +3,9 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { themeList, ColorPalette } from "@/design-system";
-import { useEditorState } from "@/hooks/useEditorState";
+import { themeList, ColorPalette, SPREAD_ZONES, defaultTheme } from "@/design-system";
+import type { ThemeId, SectionZone } from "@/design-system";
+import { useEditorState, EditorState } from "@/hooks/useEditorState";
 import { useCloudSync } from "@/hooks/useCloudSync";
 import { useSelection } from "@/hooks/useSelection";
 import { EditorProvider } from "@/contexts/EditorContext";
@@ -15,106 +16,182 @@ import LeftRail from "@/components/ui/LeftRail";
 import Inspector from "@/components/inspector/Inspector";
 import PageNav from "@/components/ui/PageNav";
 import BrandMenu from "@/components/ui/BrandMenu";
-import NewProjectModal from "@/components/ui/NewProjectModal";
 import ExportDialog from "@/components/ui/ExportDialog";
 import HelpDialog from "@/components/ui/HelpDialog";
 import DesignSystemDrawer from "@/components/ui/DesignSystemDrawer";
+import Link from "next/link";
 import {
   IconUndo, IconRedo, IconDownload, IconHelp,
-  IconPanelLeft, IconPanelRight, IconCheck,
+  IconPanelLeft, IconPanelRight, IconCheck, IconChevronLeft,
 } from "@/components/ui/Icon";
+import type {
+  LayoutContent, LayoutType, BoxStyle, ImageData, ChartConfig, Page,
+} from "@/data/types";
 
 type ColorKey = keyof Omit<ColorPalette, "cmyk">;
+
+// ─── Convert DB rows → EditorState ────────────────────────────────────────────
+
+function dbToEditorState(
+  project: {
+    activeThemeId: string;
+    colorOverrides: unknown;
+    showGrid: boolean;
+  },
+  dbPages: Array<{
+    id: string; name: string; orderIndex: number;
+    zones: unknown; contentStore: unknown; layoutOverrides: unknown;
+    boxStyles: unknown; images: unknown; chartConfigs: unknown;
+    hideHeader: boolean; hideFooter: boolean;
+  }>
+): EditorState {
+  const sorted = [...dbPages].sort((a, b) => a.orderIndex - b.orderIndex);
+  const pageOrder = sorted.map((p) => p.id);
+  const pages: Record<string, Page> = {};
+
+  for (const p of sorted) {
+    pages[p.id] = {
+      id:              p.id,
+      name:            p.name,
+      zones:           (Array.isArray(p.zones) && (p.zones as unknown[]).length > 0)
+                         ? (p.zones as SectionZone[])
+                         : SPREAD_ZONES.map((z) => ({ ...z })),
+      contentStore:    ((p.contentStore as Record<string, LayoutContent>) ?? {}),
+      layoutOverrides: ((p.layoutOverrides as Record<string, LayoutType>) ?? {}),
+      boxStyles:       ((p.boxStyles as Record<string, Partial<BoxStyle>>) ?? {}),
+      images:          ((p.images as Record<string, Partial<ImageData>>) ?? {}),
+      chartConfigs:    ((p.chartConfigs as Record<string, Partial<ChartConfig>>) ?? {}),
+      hideHeader:      p.hideHeader,
+      hideFooter:      p.hideFooter,
+    };
+  }
+
+  return {
+    activeThemeId:      (project.activeThemeId as ThemeId) || defaultTheme.id,
+    colorOverrides:     ((project.colorOverrides as Partial<ColorPalette>) ?? {}),
+    activeFontPresetId: null,
+    showGrid:           project.showGrid ?? true,
+    currentPageId:      pageOrder[0] ?? "",
+    pageOrder,
+    pages,
+  };
+}
+
+// ─── Loading screen ────────────────────────────────────────────────────────────
+
+function LoadingScreen() {
+  return (
+    <div
+      className="min-h-screen flex items-center justify-center"
+      style={{ backgroundColor: "#05080F" }}
+    >
+      <div className="flex flex-col items-center gap-4">
+        <div
+          className="w-10 h-10 flex items-center justify-center text-[12px] font-black"
+          style={{ backgroundColor: "#00D4FF", color: "#05080F" }}
+        >F1</div>
+        <div className="text-[10px] font-mono uppercase" style={{ color: "#3D6080", letterSpacing: "0.18em" }}>
+          Chargement…
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function Divider() {
   return <div className="w-px h-5" style={{ backgroundColor: "#1F1F2C" }} />;
 }
 
+// ─── Editor page ───────────────────────────────────────────────────────────────
+
 export default function EditorPage() {
   const { id: projectId } = useParams<{ id: string }>();
-  const { data: session } = useSession();
-  const editor = useEditorState();
+  const { data: session }  = useSession();
+  const editor             = useEditorState();
   const { selection, selectZone, selectSlot, clearSelection } = useSelection();
 
-  // Cloud sync — mirrors state to DB when user is logged in
+  // DB load state — blocks cloud sync until correct project is loaded
+  const [projectLoaded, setProjectLoaded] = useState(false);
+
+  // Load project from DB on mount — always takes priority over localStorage
+  useEffect(() => {
+    if (!projectId) return;
+
+    fetch(`/api/projects/${projectId}`)
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then(({ project, pages }) => {
+        const state = dbToEditorState(project, pages);
+        editor.rehydrate(state);
+        setProjectLoaded(true);
+      })
+      .catch(() => {
+        // Network offline or error — fall through to localStorage
+        setProjectLoaded(true);
+      });
+  }, [projectId]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const isLoggedIn = !!session?.user?.id;
+
+  // Cloud sync only starts AFTER DB load to prevent corrupting the project
   const { flushSync } = useCloudSync({
     projectId,
-    state: editor.state,
-    enabled: isLoggedIn,
+    state:     editor.state,
+    enabled:   isLoggedIn && projectLoaded,
     debounceMs: 1500,
   });
 
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen,   setSidebarOpen]   = useState(true);
   const [inspectorOpen, setInspectorOpen] = useState(true);
-  const [savedToast, setSavedToast] = useState(false);
-  const [newProjectOpen, setNewProjectOpen] = useState(false);
-  const [exportOpen, setExportOpen] = useState(false);
-  const [helpOpen, setHelpOpen] = useState(false);
-  const [dsOpen, setDsOpen] = useState(false);
+  const [savedToast,    setSavedToast]    = useState(false);
+  const [exportOpen,    setExportOpen]    = useState(false);
+  const [helpOpen,      setHelpOpen]      = useState(false);
+  const [dsOpen,        setDsOpen]        = useState(false);
 
   const flushRef = useRef({ local: editor.flushSave, cloud: flushSync });
-  useEffect(() => { flushRef.current = { local: editor.flushSave, cloud: flushSync }; }, [editor.flushSave, flushSync]);
+  useEffect(() => {
+    flushRef.current = { local: editor.flushSave, cloud: flushSync };
+  }, [editor.flushSave, flushSync]);
+
+  const handleSave = useCallback(() => {
+    flushRef.current.local();
+    if (isLoggedIn && projectLoaded) void flushRef.current.cloud();
+    setSavedToast(true);
+    setTimeout(() => setSavedToast(false), 2000);
+  }, [isLoggedIn, projectLoaded]);
 
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
-      const isEditing =
-        target &&
-        (target.isContentEditable ||
-          target.tagName === "INPUT" ||
-          target.tagName === "TEXTAREA");
-
+      const isEditing = target && (
+        target.isContentEditable ||
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA"
+      );
       const meta = e.metaKey || e.ctrlKey;
 
-      // Cmd combos always work
       if (meta) {
         if (e.key === "z" && !e.shiftKey) { e.preventDefault(); editor.undo(); return; }
         if (e.key === "z" && e.shiftKey)  { e.preventDefault(); editor.redo(); return; }
         if (e.key === "y")                { e.preventDefault(); editor.redo(); return; }
-        if (e.key === "s") {
-          e.preventDefault();
-          flushRef.current.local();
-          if (isLoggedIn) flushRef.current.cloud();
-          setSavedToast(true);
-          setTimeout(() => setSavedToast(false), 1500);
-          return;
-        }
-        if (e.key === "e") { e.preventDefault(); setExportOpen(true); return; }
+        if (e.key === "s")                { e.preventDefault(); handleSave(); return; }
+        if (e.key === "e")                { e.preventDefault(); setExportOpen(true); return; }
       }
 
       if (isEditing) return;
-
-      // Single-key shortcuts (only when not editing text)
       if (e.key === "Escape") { clearSelection(); return; }
       if (e.key === "?")      { e.preventDefault(); setHelpOpen(true); return; }
       if (e.key === "g")      { editor.toggleGrid(!editor.state.showGrid); return; }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [editor, clearSelection]);
+  }, [editor, clearSelection, handleSave]);
 
-  // Clear selection on page switch
+  // Clear selection when switching pages
   useEffect(() => { clearSelection(); }, [editor.state.currentPageId, clearSelection]);
-
-  // Auto-open New Project modal on first visit (state empty)
-  useEffect(() => {
-    const isFirstPage = editor.state.pageOrder.length === 1;
-    const cur = editor.currentPage;
-    const isEmpty = cur && Object.keys(cur.contentStore).length === 0
-      && Object.keys(cur.layoutOverrides).length === 0
-      && Object.keys(cur.images).length === 0;
-    const seenWelcome = typeof window !== "undefined" && localStorage.getItem("futur-one-welcome-seen");
-    if (isFirstPage && isEmpty && !seenWelcome) {
-      setNewProjectOpen(true);
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleCloseNewProject = useCallback(() => {
-    setNewProjectOpen(false);
-    try { localStorage.setItem("futur-one-welcome-seen", "1"); } catch { /* */ }
-  }, []);
 
   // Build context value
   const cur = editor.currentPage;
@@ -125,172 +202,148 @@ export default function EditorPage() {
     images:          cur?.images          ?? {},
     chartConfigs:    cur?.chartConfigs    ?? {},
     zones:           cur?.zones           ?? [],
-    currentPageId: editor.state.currentPageId,
-    pages: editor.orderedPages,
-    hideHeader: cur?.hideHeader ?? false,
-    hideFooter: cur?.hideFooter ?? false,
+    currentPageId:   editor.state.currentPageId,
+    pages:           editor.orderedPages,
+    hideHeader:      cur?.hideHeader ?? false,
+    hideFooter:      cur?.hideFooter ?? false,
     selection,
     selectZone, selectSlot, clearSelection,
-    updateContent: editor.updateContent,
-    setLayout: editor.setLayout,
-    setBoxStyle: editor.setBoxStyle,
-    resetBoxStyle: editor.resetBoxStyle,
-    setImage: editor.setImage,
-    removeImage: editor.removeImage,
-    setChartConfig: editor.setChartConfig,
-    toggleHeaderVisibility: editor.toggleHeaderVisibility,
-    toggleFooterVisibility: editor.toggleFooterVisibility,
-    setZones: editor.setZones,
-    addZone: editor.addZone,
-    removeZone: editor.removeZone,
-    reorderZones: editor.reorderZones,
-    addPage: editor.addPage,
-    duplicatePage: editor.duplicatePage,
-    deletePage: editor.deletePage,
-    reorderPages: editor.reorderPages,
-    switchPage: editor.switchPage,
-    renamePage: editor.renamePage,
-    loadTemplate: editor.loadTemplate,
-    resetProject: editor.resetProject,
+    updateContent:           editor.updateContent,
+    setLayout:               editor.setLayout,
+    setBoxStyle:             editor.setBoxStyle,
+    resetBoxStyle:           editor.resetBoxStyle,
+    setImage:                editor.setImage,
+    removeImage:             editor.removeImage,
+    setChartConfig:          editor.setChartConfig,
+    toggleHeaderVisibility:  editor.toggleHeaderVisibility,
+    toggleFooterVisibility:  editor.toggleFooterVisibility,
+    setZones:                editor.setZones,
+    addZone:                 editor.addZone,
+    removeZone:              editor.removeZone,
+    reorderZones:            editor.reorderZones,
+    addPage:                 editor.addPage,
+    duplicatePage:           editor.duplicatePage,
+    deletePage:              editor.deletePage,
+    reorderPages:            editor.reorderPages,
+    switchPage:              editor.switchPage,
+    renamePage:              editor.renamePage,
+    activeFontPresetId:      editor.state.activeFontPresetId,
+    setFontPreset:           editor.setFontPreset,
+    loadTemplate:            editor.loadTemplate,
+    resetProject:            editor.resetProject,
   }), [cur, editor, selection, selectZone, selectSlot, clearSelection]);
 
   const isTextEditing = selection.kind === "text";
+
+  // Show loading screen until DB project is loaded
+  if (!projectLoaded) return <LoadingScreen />;
 
   return (
     <EditorProvider value={editorContextValue}>
       <DragProvider>
         <FloatingFormatToolbar accentColor={editor.mergedTheme.colors.accent} active={isTextEditing} />
 
-        <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#0A0A10", color: "#E0E0E8" }}>
-
-          {/* ── TOPBAR ────────────────────────────────────────────────────── */}
+        <div
+          className="min-h-screen flex flex-col"
+          style={{ backgroundColor: "#0A0A10", color: "#E0E0E8", fontFamily: "'Satoshi', 'Inter', sans-serif" }}
+        >
+          {/* ── TOPBAR ──────────────────────────────────────────────────────── */}
           <header
-            className="flex-shrink-0 flex items-center justify-between gap-4 px-4 py-2.5 border-b flex-wrap no-export"
+            className="flex-shrink-0 flex items-center justify-between gap-3 px-3 py-2 border-b flex-wrap no-export"
             style={{ borderColor: "#1F1F2C", backgroundColor: "#0D0D14" }}
           >
-            {/* Brand menu */}
-            <div className="flex items-center gap-3 flex-shrink-0">
+            {/* LEFT */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Link
+                href="/projects"
+                className="h-7 w-7 flex items-center justify-center transition-colors"
+                style={{ border: "1px solid #2A2A3A", color: "#888", backgroundColor: "#13131C" }}
+                title="Retour aux projets"
+              >
+                <IconChevronLeft size={13} />
+              </Link>
               <BrandMenu
                 accent={editor.mergedTheme.colors.accent}
                 background={editor.mergedTheme.colors.background}
-                onNewProject={() => setNewProjectOpen(true)}
+                onNewProject={() => window.location.href = "/projects/new"}
                 onResetProject={editor.resetProject}
                 onOpenDesignSystem={() => setDsOpen(true)}
               />
             </div>
 
-            {/* Page navigator */}
+            {/* CENTER */}
             <PageNav theme={editor.mergedTheme} />
 
-            {/* Right cluster */}
-            <div className="flex items-center gap-1.5 flex-shrink-0">
-              {/* Undo / Redo */}
+            {/* RIGHT */}
+            <div className="flex items-center gap-1 flex-shrink-0">
               <div className="flex gap-px">
                 <button
-                  onClick={editor.undo}
-                  disabled={!editor.canUndo}
-                  title="Annuler (⌘Z)"
-                  className="h-7 w-8 flex items-center justify-center transition-colors disabled:opacity-25"
-                  style={{ border: "1px solid #2A2A3A", borderRight: "none", color: editor.canUndo ? "#C5C5D0" : "#444", backgroundColor: "#13131C" }}
-                >
-                  <IconUndo size={13} />
-                </button>
+                  onClick={editor.undo} disabled={!editor.canUndo} title="Annuler (⌘Z)"
+                  className="h-7 w-7 flex items-center justify-center transition-colors disabled:opacity-25"
+                  style={{ border: "1px solid #2A2A3A", borderRight: "none", color: editor.canUndo ? "#C5C5D0" : "#555", backgroundColor: "#13131C" }}
+                ><IconUndo size={12} /></button>
                 <button
-                  onClick={editor.redo}
-                  disabled={!editor.canRedo}
-                  title="Rétablir (⌘⇧Z)"
-                  className="h-7 w-8 flex items-center justify-center transition-colors disabled:opacity-25"
-                  style={{ border: "1px solid #2A2A3A", color: editor.canRedo ? "#C5C5D0" : "#444", backgroundColor: "#13131C" }}
-                >
-                  <IconRedo size={13} />
-                </button>
+                  onClick={editor.redo} disabled={!editor.canRedo} title="Rétablir (⌘⇧Z)"
+                  className="h-7 w-7 flex items-center justify-center transition-colors disabled:opacity-25"
+                  style={{ border: "1px solid #2A2A3A", color: editor.canRedo ? "#C5C5D0" : "#555", backgroundColor: "#13131C" }}
+                ><IconRedo size={12} /></button>
               </div>
 
               <Divider />
 
-              {/* Grid toggle (shortcut G) */}
               <label
-                className="flex items-center gap-1.5 cursor-pointer h-7 px-2"
-                title="Afficher la grille (G)"
+                className="flex items-center gap-1.5 cursor-pointer h-7 px-2" title="Grille (G)"
                 style={{ border: "1px solid #2A2A3A", backgroundColor: "#13131C" }}
               >
                 <input
-                  type="checkbox"
-                  checked={editor.state.showGrid}
+                  type="checkbox" checked={editor.state.showGrid}
                   onChange={(e) => editor.toggleGrid(e.target.checked)}
-                  className="w-3 h-3"
-                  style={{ accentColor: editor.mergedTheme.colors.accent }}
+                  className="w-3 h-3" style={{ accentColor: editor.mergedTheme.colors.accent }}
                 />
-                <span
-                  className="text-[9px] font-mono uppercase hidden sm:inline"
-                  style={{ color: editor.state.showGrid ? editor.mergedTheme.colors.accent : "#888", letterSpacing: "0.12em" }}
-                >Grille</span>
+                <span className="text-[9px] uppercase hidden sm:inline" style={{ color: editor.state.showGrid ? editor.mergedTheme.colors.accent : "#777", letterSpacing: "0.08em", fontWeight: 500 }}>
+                  Grille
+                </span>
               </label>
 
               <Divider />
 
-              {/* Export */}
               <button
-                onClick={() => setExportOpen(true)}
-                title="Exporter (⌘E)"
-                className="h-7 px-3 flex items-center gap-1.5 text-[10px] font-mono uppercase transition-colors"
+                onClick={handleSave} title="Sauvegarder (⌘S)"
+                className="h-7 px-3 flex items-center gap-1.5 text-[10px] uppercase font-semibold transition-all"
                 style={{
-                  border: `1px solid ${editor.mergedTheme.colors.accent}80`,
-                  color: editor.mergedTheme.colors.accent,
-                  backgroundColor: `${editor.mergedTheme.colors.accent}12`,
-                  letterSpacing: "0.12em",
+                  border: `1px solid ${savedToast ? editor.mergedTheme.colors.accent + "80" : "#2A2A3A"}`,
+                  color: savedToast ? editor.mergedTheme.colors.accent : "#C5C5D0",
+                  backgroundColor: savedToast ? `${editor.mergedTheme.colors.accent}12` : "#13131C",
+                  letterSpacing: "0.08em", minWidth: 90,
                 }}
               >
-                <IconDownload size={12} />
-                Export
+                {savedToast ? <><IconCheck size={11} /> Sauvegardé</> : "Sauvegarder"}
               </button>
 
-              {/* Help */}
               <button
-                onClick={() => setHelpOpen(true)}
-                title="Raccourcis (?)"
-                className="h-7 w-8 flex items-center justify-center transition-colors"
-                style={{ border: "1px solid #2A2A3A", color: "#888", backgroundColor: "#13131C" }}
-              >
-                <IconHelp size={13} />
-              </button>
+                onClick={() => setExportOpen(true)} title="Exporter (⌘E)"
+                className="h-7 px-3 flex items-center gap-1.5 text-[10px] uppercase font-semibold transition-colors"
+                style={{ border: `1px solid ${editor.mergedTheme.colors.accent}80`, color: editor.mergedTheme.colors.accent, backgroundColor: `${editor.mergedTheme.colors.accent}12`, letterSpacing: "0.08em" }}
+              ><IconDownload size={12} /> Export</button>
 
-              {/* Sidebar toggle */}
+              <button
+                onClick={() => setHelpOpen(true)} title="Raccourcis (?)"
+                className="h-7 w-7 flex items-center justify-center transition-colors"
+                style={{ border: "1px solid #2A2A3A", color: "#888", backgroundColor: "#13131C" }}
+              ><IconHelp size={12} /></button>
+
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="h-7 w-8 flex items-center justify-center transition-colors"
-                style={{
-                  border: `1px solid ${sidebarOpen ? editor.mergedTheme.colors.accent + "60" : "#2A2A3A"}`,
-                  color: sidebarOpen ? editor.mergedTheme.colors.accent : "#888",
-                  backgroundColor: sidebarOpen ? `${editor.mergedTheme.colors.accent}12` : "#13131C",
-                }}
-                title={sidebarOpen ? "Masquer le panneau latéral" : "Afficher le panneau latéral"}
-              >
-                {sidebarOpen ? <IconPanelLeft size={13} /> : <IconPanelRight size={13} />}
-              </button>
-
-              {/* Saved toast */}
-              {savedToast && (
-                <div
-                  className="h-7 px-2.5 flex items-center gap-1.5 text-[9px] font-mono uppercase"
-                  style={{
-                    backgroundColor: `${editor.mergedTheme.colors.accent}18`,
-                    color: editor.mergedTheme.colors.accent,
-                    border: `1px solid ${editor.mergedTheme.colors.accent}40`,
-                    letterSpacing: "0.12em",
-                  }}
-                >
-                  <IconCheck size={11} />
-                  Sauvegardé
-                </div>
-              )}
+                className="h-7 w-7 flex items-center justify-center transition-colors"
+                style={{ border: `1px solid ${sidebarOpen ? editor.mergedTheme.colors.accent + "50" : "#2A2A3A"}`, color: sidebarOpen ? editor.mergedTheme.colors.accent : "#888", backgroundColor: sidebarOpen ? `${editor.mergedTheme.colors.accent}10` : "#13131C" }}
+                title={sidebarOpen ? "Masquer le panneau" : "Afficher le panneau"}
+              >{sidebarOpen ? <IconPanelLeft size={12} /> : <IconPanelRight size={12} />}</button>
             </div>
           </header>
 
-          {/* ── MAIN ─────────────────────────────────────────────────────── */}
+          {/* ── MAIN ────────────────────────────────────────────────────────── */}
           <div className="flex flex-1 overflow-hidden">
 
-            {/* LEFT RAIL */}
             {sidebarOpen && (
               <LeftRail
                 theme={editor.mergedTheme}
@@ -304,43 +357,29 @@ export default function EditorPage() {
               />
             )}
 
-            {/* CENTER CANVAS */}
             <main
-              className="flex-1 overflow-auto"
-              onClick={(e) => {
-                // Click on the canvas background clears selection
-                if (e.target === e.currentTarget) clearSelection();
-              }}
+              className="flex-1 overflow-auto flex flex-col"
+              onClick={(e) => { if (e.target === e.currentTarget) clearSelection(); }}
             >
-              <div className="min-h-full flex flex-col">
-                <div className="flex-1">
-                  <Spread
-                    theme={editor.mergedTheme}
-                    zones={cur?.zones ?? []}
-                    onZonesChange={editor.setZones}
-                    showGrid={editor.state.showGrid}
-                  />
-                </div>
+              <div className="flex-1">
+                <Spread
+                  theme={editor.mergedTheme}
+                  zones={cur?.zones ?? []}
+                  onZonesChange={editor.setZones}
+                  showGrid={editor.state.showGrid}
+                />
               </div>
             </main>
 
-            {/* RIGHT INSPECTOR */}
             {inspectorOpen && (
               <Inspector theme={editor.mergedTheme} onClose={() => setInspectorOpen(false)} />
             )}
 
-            {/* Floating button to reopen inspector */}
             {!inspectorOpen && (
               <button
                 onClick={() => setInspectorOpen(true)}
                 className="absolute right-3 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 px-1.5 py-3 text-[9px] font-mono uppercase z-30"
-                style={{
-                  border: `1px solid ${editor.mergedTheme.colors.accent}60`,
-                  backgroundColor: "#0D0D14",
-                  color: editor.mergedTheme.colors.accent,
-                  letterSpacing: "0.18em",
-                }}
-                title="Ouvrir l'inspector"
+                style={{ border: `1px solid ${editor.mergedTheme.colors.accent}60`, backgroundColor: "#0D0D14", color: editor.mergedTheme.colors.accent, letterSpacing: "0.18em" }}
               >
                 <IconPanelRight size={13} />
                 <span style={{ writingMode: "vertical-rl" as const }}>Inspector</span>
@@ -349,21 +388,6 @@ export default function EditorPage() {
           </div>
         </div>
 
-        {/* Modals */}
-        {newProjectOpen && (
-          <NewProjectModal
-            theme={editor.mergedTheme}
-            onClose={handleCloseNewProject}
-            onSelect={(template) => {
-              editor.loadTemplate(template);
-              handleCloseNewProject();
-            }}
-            onBlank={() => {
-              editor.resetProject();
-              handleCloseNewProject();
-            }}
-          />
-        )}
         {exportOpen && (
           <ExportDialog
             theme={editor.mergedTheme}
@@ -372,8 +396,8 @@ export default function EditorPage() {
             onClose={() => setExportOpen(false)}
           />
         )}
-        {helpOpen && <HelpDialog theme={editor.mergedTheme} onClose={() => setHelpOpen(false)} />}
-        {dsOpen && <DesignSystemDrawer theme={editor.mergedTheme} onClose={() => setDsOpen(false)} />}
+        {helpOpen  && <HelpDialog theme={editor.mergedTheme} onClose={() => setHelpOpen(false)} />}
+        {dsOpen    && <DesignSystemDrawer theme={editor.mergedTheme} onClose={() => setDsOpen(false)} />}
       </DragProvider>
     </EditorProvider>
   );

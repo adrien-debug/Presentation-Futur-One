@@ -4,6 +4,7 @@ import { useReducer, useEffect, useCallback, useRef } from "react";
 import { themeList, defaultTheme, ArtDirection, SectionZone, SPREAD_ZONES, ColorPalette, ThemeId } from "@/design-system";
 import { ZONE } from "@/design-system/constants";
 import { LayoutContent, LayoutType, BoxStyle, ImageData, ChartConfig, Page, Template } from "@/data/types";
+import { FONT_PRESETS, FontPresetId } from "@/design-system/font-presets";
 
 /**
  * EditorState v3 — multi-page.
@@ -22,6 +23,7 @@ import { LayoutContent, LayoutType, BoxStyle, ImageData, ChartConfig, Page, Temp
 export interface EditorState {
   activeThemeId: ThemeId;
   colorOverrides: Partial<ColorPalette>;
+  activeFontPresetId: FontPresetId | null;
   showGrid: boolean;
   currentPageId: string;
   pageOrder: string[];
@@ -36,6 +38,7 @@ type EditorAction =
   | { type: "SET_COLOR"; key: ColorKey; value: string }
   | { type: "RESET_COLOR"; key: ColorKey }
   | { type: "RESET_ALL_COLORS" }
+  | { type: "SET_FONT_PRESET"; presetId: FontPresetId | null }
   | { type: "TOGGLE_GRID"; value: boolean }
   // Per-page (act on currentPageId)
   | { type: "SET_ZONES"; zones: SectionZone[] }
@@ -93,6 +96,7 @@ export function createInitialState(): EditorState {
   return {
     activeThemeId: defaultTheme.id,
     colorOverrides: {},
+    activeFontPresetId: null,
     showGrid: true,
     currentPageId: firstPage.id,
     pageOrder: [firstPage.id],
@@ -156,6 +160,8 @@ function reducePresent(present: EditorState, action: EditorAction): EditorState 
     // ─── Global ─────────────────────────────────────────────────────────────
     case "SET_THEME":
       return { ...present, activeThemeId: action.themeId, colorOverrides: {} };
+    case "SET_FONT_PRESET":
+      return { ...present, activeFontPresetId: action.presetId };
     case "SET_COLOR":
       return { ...present, colorOverrides: { ...present.colorOverrides, [action.key]: action.value } };
     case "RESET_COLOR": {
@@ -459,9 +465,22 @@ export function useEditorState() {
   const { present, past, future } = history;
 
   const activeTheme = themeList.find((t) => t.id === present.activeThemeId) ?? defaultTheme;
+  const fontPreset = present.activeFontPresetId
+    ? FONT_PRESETS.find((p) => p.id === present.activeFontPresetId)
+    : null;
   const mergedTheme: ArtDirection = {
     ...activeTheme,
     colors: { ...activeTheme.colors, ...present.colorOverrides },
+    typography: fontPreset?.headingFont
+      ? {
+          ...activeTheme.typography,
+          headingFont: fontPreset.headingFont,
+          bodyFont: fontPreset.bodyFont,
+          monoFont: fontPreset.monoFont,
+          headingWeight: fontPreset.headingWeight,
+          letterSpacing: fontPreset.letterSpacing,
+        }
+      : activeTheme.typography,
   };
 
   // ─── Action wrappers ──────────────────────────────────────────────────────
@@ -469,6 +488,7 @@ export function useEditorState() {
   const redo            = useCallback(() => dispatch({ type: "REDO" }), []);
   // Global
   const setTheme        = useCallback((themeId: ThemeId) => dispatch({ type: "SET_THEME", themeId }), []);
+  const setFontPreset   = useCallback((presetId: FontPresetId | null) => dispatch({ type: "SET_FONT_PRESET", presetId }), []);
   const setColor        = useCallback((key: ColorKey, value: string) => dispatch({ type: "SET_COLOR", key, value }), []);
   const resetColor      = useCallback((key: ColorKey) => dispatch({ type: "RESET_COLOR", key }), []);
   const resetAllColors  = useCallback(() => dispatch({ type: "RESET_ALL_COLORS" }), []);
@@ -526,7 +546,7 @@ export function useEditorState() {
     canUndo: past.length > 0,
     canRedo: future.length > 0,
     undo, redo,
-    setTheme, setColor, resetColor, resetAllColors, toggleGrid,
+    setTheme, setFontPreset, setColor, resetColor, resetAllColors, toggleGrid,
     setZones, addZone, removeZone, reorderZones,
     updateContent, setLayout,
     setBoxStyle, resetBoxStyle,
@@ -535,5 +555,6 @@ export function useEditorState() {
     addPage, duplicatePage, deletePage, reorderPages, switchPage, renamePage,
     loadTemplate, resetProject,
     flushSave,
+    rehydrate: useCallback((state: EditorState) => dispatch({ type: "REHYDRATE", state }), []),
   };
 }

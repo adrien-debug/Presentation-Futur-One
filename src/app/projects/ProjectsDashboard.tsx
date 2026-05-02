@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import type { Project } from "@/db/schema";
-import { IconPlus, IconClose, IconLayout } from "@/components/ui/Icon";
+import { IconPlus, IconClose, IconLayout, IconChevronRight } from "@/components/ui/Icon";
 
 interface Props {
   projects: Project[];
@@ -14,22 +14,7 @@ interface Props {
 export default function ProjectsDashboard({ projects: initial, userEmail }: Props) {
   const router = useRouter();
   const [projects, setProjects] = useState(initial);
-  const [creating, startCreate] = useTransition();
   const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  const handleCreate = () => {
-    startCreate(async () => {
-      const res = await fetch("/api/projects", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: `Projet ${projects.length + 1}` }),
-      });
-      if (res.ok) {
-        const p = await res.json();
-        router.push(`/projects/${p.id}`);
-      }
-    });
-  };
 
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`Supprimer "${name}" ? Cette action est irréversible.`)) return;
@@ -39,103 +24,142 @@ export default function ProjectsDashboard({ projects: initial, userEmail }: Prop
     setDeletingId(null);
   };
 
-  const accent = "#00D4FF";
+  const SATOSHI = "'Satoshi', 'Inter', sans-serif";
+  const accent  = "#00D4FF";
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#05080F", color: "#E8F4FF" }}>
-      {/* Header */}
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#05080F", color: "#E8F4FF", fontFamily: SATOSHI }}>
+
+      {/* ── TOPBAR ──────────────────────────────────────────────────────────── */}
       <header
         className="flex items-center justify-between px-8 py-4 border-b flex-shrink-0"
-        style={{ borderColor: "#1A3A5C", backgroundColor: "#0A0E1A" }}
+        style={{ borderColor: "#131C28", backgroundColor: "#08101A" }}
       >
+        {/* Brand */}
         <div className="flex items-center gap-3">
-          <div
-            className="w-8 h-8 flex items-center justify-center text-[11px] font-black"
-            style={{ backgroundColor: accent, color: "#05080F" }}
-          >F1</div>
+          <div className="w-8 h-8 flex items-center justify-center text-[11px] font-black" style={{ backgroundColor: accent, color: "#05080F" }}>
+            F1
+          </div>
           <div>
-            <div className="text-[11px] font-bold uppercase" style={{ letterSpacing: "0.18em" }}>FUTUR ONE</div>
+            <div className="text-[12px] font-bold uppercase" style={{ letterSpacing: "0.16em" }}>FUTUR ONE</div>
             <div className="text-[7px] font-mono" style={{ color: "#3D6080", letterSpacing: "0.1em" }}>DataCenter · Design Tool</div>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <span className="text-[10px] font-mono" style={{ color: "#6B8FAA" }}>{userEmail}</span>
+        {/* User */}
+        <div className="flex items-center gap-3">
+          <span className="text-[11px]" style={{ color: "#6B8FAA" }}>{userEmail}</span>
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
-            className="text-[9px] font-mono uppercase px-3 py-1.5 transition-colors"
-            style={{ border: "1px solid #1A3A5C", color: "#6B8FAA", letterSpacing: "0.12em" }}
+            className="text-[10px] font-medium px-3 py-1.5 transition-colors"
+            style={{ border: "1px solid #131C28", color: "#6B8FAA", letterSpacing: "0.06em" }}
             onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#E07070"; e.currentTarget.style.color = "#E07070"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#1A3A5C"; e.currentTarget.style.color = "#6B8FAA"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#131C28"; e.currentTarget.style.color = "#6B8FAA"; }}
           >
             Déconnexion
           </button>
         </div>
       </header>
 
-      {/* Main */}
+      {/* ── MAIN ────────────────────────────────────────────────────────────── */}
       <main className="flex-1 px-8 py-10">
         <div className="max-w-5xl mx-auto">
+
           {/* Title row */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-end justify-between mb-8">
             <div>
-              <h1 className="text-[24px] font-bold" style={{ letterSpacing: "-0.02em" }}>Mes projets</h1>
-              <p className="text-[11px] mt-1" style={{ color: "#6B8FAA" }}>
-                {projects.length} projet{projects.length !== 1 ? "s" : ""}
+              <h1 className="text-[26px] font-bold" style={{ letterSpacing: "-0.025em" }}>
+                Mes projets
+              </h1>
+              <p className="text-[12px] mt-1" style={{ color: "#6B8FAA" }}>
+                {projects.length === 0
+                  ? "Aucun projet pour l'instant"
+                  : `${projects.length} projet${projects.length > 1 ? "s" : ""}`}
               </p>
             </div>
             <button
-              onClick={handleCreate}
-              disabled={creating}
-              className="flex items-center gap-2 px-4 py-2.5 text-[10px] font-mono uppercase font-bold transition-all disabled:opacity-40"
-              style={{
-                backgroundColor: accent,
-                color: "#05080F",
-                letterSpacing: "0.14em",
-              }}
+              onClick={() => router.push("/projects/new")}
+              className="flex items-center gap-2 px-4 py-2.5 text-[11px] font-semibold transition-all"
+              style={{ backgroundColor: accent, color: "#05080F", letterSpacing: "0.06em" }}
+              onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.85"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
             >
               <IconPlus size={13} />
               Nouveau projet
             </button>
           </div>
 
-          {/* Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {projects.map((p) => (
-              <ProjectCard
-                key={p.id}
-                project={p}
-                onOpen={() => router.push(`/projects/${p.id}`)}
-                onDelete={() => handleDelete(p.id, p.name)}
-                deleting={deletingId === p.id}
-                accent={accent}
-              />
-            ))}
-
-            {/* Create card */}
-            <button
-              onClick={handleCreate}
-              disabled={creating}
-              className="flex flex-col items-center justify-center gap-3 transition-all min-h-[160px] disabled:opacity-40"
-              style={{
-                border: `1px dashed ${accent}40`,
-                backgroundColor: `${accent}05`,
-                color: accent,
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = `${accent}10`; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = `${accent}05`; }}
+          {/* Empty state */}
+          {projects.length === 0 && (
+            <div
+              className="flex flex-col items-center justify-center py-24 gap-6"
+              style={{ border: "1px dashed #131C28" }}
             >
-              <IconPlus size={20} />
-              <span className="text-[10px] font-mono uppercase" style={{ letterSpacing: "0.14em" }}>
-                {creating ? "Création…" : "Nouveau projet"}
-              </span>
-            </button>
-          </div>
+              <div style={{ color: "#1A3A5C" }}>
+                <IconLayout size={48} />
+              </div>
+              <div className="text-center">
+                <p className="text-[15px] font-semibold mb-1" style={{ color: "#E8F4FF" }}>
+                  Aucun projet
+                </p>
+                <p className="text-[12px]" style={{ color: "#6B8FAA" }}>
+                  Commence par choisir un modèle ou une page vide.
+                </p>
+              </div>
+              <button
+                onClick={() => router.push("/projects/new")}
+                className="flex items-center gap-2 px-5 py-2.5 text-[11px] font-semibold"
+                style={{ backgroundColor: accent, color: "#05080F" }}
+              >
+                <IconPlus size={13} />
+                Créer mon premier projet
+              </button>
+            </div>
+          )}
+
+          {/* Project grid */}
+          {projects.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {projects.map((p) => (
+                <ProjectCard
+                  key={p.id}
+                  project={p}
+                  onOpen={() => router.push(`/projects/${p.id}`)}
+                  onDelete={() => handleDelete(p.id, p.name)}
+                  deleting={deletingId === p.id}
+                  accent={accent}
+                />
+              ))}
+
+              {/* Add card */}
+              <button
+                onClick={() => router.push("/projects/new")}
+                className="flex flex-col items-center justify-center gap-2 transition-all min-h-[180px]"
+                style={{ border: `1px dashed #131C28`, color: "#3D6080" }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${accent}50`; e.currentTarget.style.color = accent; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#131C28"; e.currentTarget.style.color = "#3D6080"; }}
+              >
+                <IconPlus size={18} />
+                <span className="text-[10px] font-medium uppercase" style={{ letterSpacing: "0.1em" }}>
+                  Nouveau projet
+                </span>
+              </button>
+            </div>
+          )}
         </div>
       </main>
+
+      {/* ── FOOTER ──────────────────────────────────────────────────────────── */}
+      <footer className="px-8 py-4 border-t" style={{ borderColor: "#131C28" }}>
+        <p className="text-[9px] font-mono" style={{ color: "#1A3A5C", letterSpacing: "0.1em" }}>
+          FUTUR ONE © 2025 · DataCenter Infrastructure · Qatar
+        </p>
+      </footer>
     </div>
   );
 }
+
+// ─── Project card ──────────────────────────────────────────────────────────────
 
 function ProjectCard({
   project, onOpen, onDelete, deleting, accent,
@@ -146,27 +170,35 @@ function ProjectCard({
   deleting: boolean;
   accent: string;
 }) {
-  const updatedAt = new Date(project.updatedAt);
-  const timeAgo = formatTimeAgo(updatedAt);
-
   return (
     <div
       className="group relative flex flex-col cursor-pointer transition-all"
-      style={{ border: "1px solid #1A3A5C", backgroundColor: "#0F1929" }}
+      style={{ border: "1px solid #131C28", backgroundColor: "#08101A" }}
       onClick={onOpen}
-      onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${accent}60`; }}
-      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#1A3A5C"; }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${accent}40`; }}
+      onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#131C28"; }}
     >
-      {/* Preview area */}
+      {/* Preview */}
       <div
-        className="w-full flex items-center justify-center"
-        style={{ height: 100, backgroundColor: "#0A0E1A", borderBottom: "1px solid #1A3A5C" }}
+        className="w-full flex items-center justify-center relative"
+        style={{ height: 110, backgroundColor: "#060D14", borderBottom: "1px solid #131C28" }}
       >
-        <IconLayout size={32} style={{ color: `${accent}30` }} />
+        {/* Theme color strip */}
+        <div className="absolute bottom-0 left-0 right-0 h-0.5" style={{ backgroundColor: `${accent}30` }} />
+        <IconLayout size={28} style={{ color: `${accent}25` }} />
+
+        {/* Open arrow on hover */}
+        <div
+          className="absolute right-3 top-3 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1"
+          style={{ color: accent }}
+        >
+          <span className="text-[8px] font-medium uppercase" style={{ letterSpacing: "0.1em" }}>Ouvrir</span>
+          <IconChevronRight size={11} />
+        </div>
       </div>
 
       {/* Info */}
-      <div className="p-4 flex flex-col gap-1">
+      <div className="p-4 flex flex-col gap-1.5">
         <div className="flex items-start justify-between gap-2">
           <p className="text-[13px] font-semibold leading-tight" style={{ color: "#E8F4FF" }}>
             {project.name}
@@ -181,14 +213,17 @@ function ProjectCard({
             <IconClose size={11} />
           </button>
         </div>
-        <p className="text-[9px] font-mono" style={{ color: "#3D6080", letterSpacing: "0.08em" }}>
-          {timeAgo}
-        </p>
-        <div
-          className="mt-2 text-[8px] font-mono uppercase px-1.5 py-0.5 self-start"
-          style={{ backgroundColor: `${accent}15`, color: accent, border: `1px solid ${accent}30`, letterSpacing: "0.12em" }}
-        >
-          {project.activeThemeId.replace(/-/g, " ")}
+
+        <div className="flex items-center gap-2">
+          <span
+            className="text-[8px] font-mono uppercase px-1.5 py-0.5"
+            style={{ backgroundColor: `${accent}12`, color: accent, border: `1px solid ${accent}25`, letterSpacing: "0.1em" }}
+          >
+            {project.activeThemeId.replace(/-/g, " ")}
+          </span>
+          <span className="text-[9px]" style={{ color: "#3D6080" }}>
+            {formatTimeAgo(new Date(project.updatedAt))}
+          </span>
         </div>
       </div>
     </div>
@@ -196,13 +231,13 @@ function ProjectCard({
 }
 
 function formatTimeAgo(date: Date): string {
-  const diff = Date.now() - date.getTime();
-  const mins  = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days  = Math.floor(diff / 86400000);
-  if (mins  < 1)   return "À l'instant";
-  if (mins  < 60)  return `Il y a ${mins} min`;
-  if (hours < 24)  return `Il y a ${hours}h`;
-  if (days  < 7)   return `Il y a ${days}j`;
+  const diff  = Date.now() - date.getTime();
+  const mins  = Math.floor(diff / 60_000);
+  const hours = Math.floor(diff / 3_600_000);
+  const days  = Math.floor(diff / 86_400_000);
+  if (mins  < 1)  return "À l'instant";
+  if (mins  < 60) return `Il y a ${mins} min`;
+  if (hours < 24) return `Il y a ${hours}h`;
+  if (days  < 7)  return `Il y a ${days}j`;
   return date.toLocaleDateString("fr-FR");
 }
