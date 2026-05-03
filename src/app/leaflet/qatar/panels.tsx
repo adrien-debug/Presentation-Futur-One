@@ -2,32 +2,43 @@
 
 import React from "react";
 import Panel from "./Panel";
+import {
+  INSIDE_LEFT_OPPORTUNITY_BAND_MM,
+  INSIDE_RIGHT_BAND_PHOTO_STRIP_MM,
+  INSIDE_RIGHT_BOTTOM_BAND_MM,
+  INSIDE_RIGHT_RESERVED_BOTTOM_MM,
+  margin,
+} from "./design-tokens";
 
 /**
- * Direction artistique : MONOLITH ÉDITORIAL
- * — Edge-to-edge, zéro safe margin respectueux.
- * — Une seule gestuelle typographique XL par panneau.
- * — Asymétrie assumée. Le contenu EST le design.
+ * Direction artistique : INSTITUTIONNEL CLAIR (Qatar / premium)
+ * — Fond majoritairement blanc / gris froid ; maroon = seul accent.
+ * — Typo Satoshi ; hiérarchie par taille et gris, pas par aplats noirs.
  *
- * PALETTE STRICTE : UNE seule couleur (maroon Qatar) + échelle noir/gris/blanc.
- * - Aucune variante de maroon (pas de "maroon clair" ni "maroon glow").
- * - Aucun or, aucun jaune, aucun crème.
- * - Le maroon est le SEUL signal couleur. Tout le reste = neutres.
+ * PALETTE : maroon Qatar + neutres (éviter #000 en grandes surfaces).
  */
 export const PALETTE = {
   // L'unique couleur — le maroon Qatar (Pantone 1955 C)
   maroon: "#8A1538",
 
-  // Échelle neutre noir → blanc (c'est tout)
-  black:    "#000000",  // noir pur (fonds, ink dense)
-  ink:      "#0A0A0A",  // ink doux (fonds alternatifs)
-  charcoal: "#1A1A1A",  // gris très foncé
-  graphite: "#222222",  // Plus dense pour l'impression
-  ash:      "#444444",  // Plus dense
-  silver:   "#777777",  // Plus dense
-  smoke:    "#EEEEEE",  // Presque blanc pour le texte sur noir
+  black:    "#000000",
+  ink:      "#0A0A0A",
+  charcoal: "#1A1A1A",
+  graphite: "#222222",
+  ash:      "#444444",
+  silver:   "#777777",
+  smoke:    "#EEEEEE",
   fog:      "#F8F8F8",
   white:    "#FFFFFF",
+
+  /** Pages intérieures et surfaces « papier » */
+  paper: "#FAFAFA",
+  mist: "#F5F5F7",
+  bandSurface: "#ECECF0",
+  /** Texte sur fond clair (évite noir pur) */
+  textInk: "#1C1C1E",
+  textMuted: "#636366",
+  dividerSubtle: "#D1D1D6",
 };
 
 const FONT = "'Satoshi', system-ui, sans-serif";
@@ -88,11 +99,7 @@ const HLogo: React.FC<{
   />
 );
 
-// ═════════════════════════════════════════════════════════════════════════
-// COVER — gesture : « FUTUR » massif coupé par le bord droit, « ONE. » dessous
-//                   en or, hairline diagonale, monogramme top-left, specs micro
-//                   en bas-droite. Tout en bleed, zéro respect du cadre.
-// ═════════════════════════════════════════════════════════════════════════
+// COVER — photo pleine, typo XL, specs bas.
 
 export function CoverPanel({ showGuides = false }: { showGuides?: boolean }) {
   // PNG raw, servi par Next sans compression (cf. next.config.ts unoptimized:true).
@@ -107,11 +114,23 @@ export function CoverPanel({ showGuides = false }: { showGuides?: boolean }) {
         backgroundPosition: "center",
       }} />
 
-      {/* ── Overlay sombre pour lisibilité (couleur pleine, pas de dégradé complexe) ── */}
+      {/* ── Overlay : fond plus lumineux en bas (lisibilité specs sans tout noircir) ── */}
       <div style={{
         position: "absolute", inset: 0,
-        background: `linear-gradient(180deg, transparent 0%, ${PALETTE.black} 100%)`,
+        background: `linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.55) 72%, ${PALETTE.black} 100%)`,
       }} />
+      <div
+        aria-hidden
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: "38%",
+          background: `linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.12) 100%)`,
+          pointerEvents: "none",
+        }}
+      />
 
       {/* ── Filigrane H Hearst ── */}
       <HLogo
@@ -128,7 +147,7 @@ export function CoverPanel({ showGuides = false }: { showGuides?: boolean }) {
       {/* ── Mark F1 top-left ── */}
       <div style={{
         position: "absolute",
-        top: "16mm", left: "16mm",
+        top: margin, left: margin,
         width: "24mm", height: "24mm",
         backgroundColor: PALETTE.maroon,
         display: "flex",
@@ -145,7 +164,7 @@ export function CoverPanel({ showGuides = false }: { showGuides?: boolean }) {
       {/* ── Eyebrow vertical sur la marge droite ── */}
       <div style={{
         position: "absolute",
-        top: "16mm", right: "16mm",
+        top: margin, right: margin,
         transform: "rotate(90deg)",
         transformOrigin: "right top",
       }}>
@@ -156,7 +175,7 @@ export function CoverPanel({ showGuides = false }: { showGuides?: boolean }) {
       <div style={{
         position: "absolute",
         top: "140mm",
-        left: "16mm",
+        left: margin,
         fontFamily: FONT,
         fontWeight: 900,
         fontSize: "140pt",
@@ -172,7 +191,7 @@ export function CoverPanel({ showGuides = false }: { showGuides?: boolean }) {
       <div style={{
         position: "absolute",
         top: "190mm",
-        left: "16mm",
+        left: margin,
         fontFamily: FONT,
         fontWeight: 900,
         fontSize: "110pt",
@@ -186,9 +205,9 @@ export function CoverPanel({ showGuides = false }: { showGuides?: boolean }) {
       {/* ── Bandeau bas : trio de specs ── */}
       <div style={{
         position: "absolute",
-        bottom: "16mm",
-        left: "16mm",
-        right: "16mm",
+        bottom: margin,
+        left: margin,
+        right: margin,
         display: "flex",
         justifyContent: "space-between",
         alignItems: "flex-end",
@@ -212,76 +231,72 @@ export function CoverPanel({ showGuides = false }: { showGuides?: boolean }) {
   );
 }
 
-// ═════════════════════════════════════════════════════════════════════════
-// BACK — gesture : pull-quote en énorme italique léger, espace négatif vaste,
-//                  un seul hairline d'or, coordonnées micro en bas-droit.
-//                  Confidence : on n'a rien à prouver.
-// ═════════════════════════════════════════════════════════════════════════
+// BACK — bande photo haute, fond papier, citation et contact.
 
 export function BackPanel({ showGuides = false }: { showGuides?: boolean }) {
-  // PNG raw, servi sans compression (cf. next.config.ts unoptimized).
   const backImg = "/leaflet-qatar/back-cover.png";
   return (
-    <Panel bg={PALETTE.ink} showGuides={showGuides} label="Dos">
-      {/* ── PHOTO FULL BLEED ── */}
+    <Panel bg={PALETTE.paper} showGuides={showGuides} label="Dos">
       <div style={{
-        position: "absolute", inset: 0,
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        height: "118mm",
         backgroundImage: `url(${backImg})`,
         backgroundSize: "cover",
-        backgroundPosition: "center",
+        backgroundPosition: "center top",
       }} />
-
-      {/* ── Overlay sombre dégradé ── */}
       <div style={{
-        position: "absolute", inset: 0,
-        background: `linear-gradient(180deg, transparent 0%, ${PALETTE.black} 100%)`,
+        position: "absolute",
+        top: 0,
+        left: 0,
+        right: 0,
+        height: "118mm",
+        background: `linear-gradient(180deg, rgba(0,0,0,0.12) 0%, ${PALETTE.paper} 90%)`,
       }} />
 
-      {/* ── Filigrane H Hearst ── */}
       <HLogo
-        size="120mm"
-        color={PALETTE.white}
-        opacity={0.03}
+        size="100mm"
+        color={PALETTE.maroon}
+        opacity={0.06}
         style={{
           position: "absolute",
-          bottom: "20mm",
-          right: "-50mm",
+          bottom: "24mm",
+          right: "-40mm",
         }}
       />
 
-      {/* ── Index top-left ── */}
-      <div style={{ position: "absolute", top: "16mm", left: "16mm" }}>
+      <div style={{ position: "absolute", top: margin, left: margin }}>
         <Eyebrow color={PALETTE.maroon}>04</Eyebrow>
       </div>
 
-      {/* ── Index miroir top-right ── */}
-      <div style={{ position: "absolute", top: "16mm", right: "16mm" }}>
-        <Eyebrow color={PALETTE.silver}>End</Eyebrow>
+      <div style={{ position: "absolute", top: margin, right: margin }}>
+        <Eyebrow color={PALETTE.textMuted}>End</Eyebrow>
       </div>
 
-      {/* ── Pull-quote MONUMENTAL ── */}
       <div style={{
         position: "absolute",
-        top: "80mm",
-        left: "16mm",
-        right: "16mm",
+        top: "100mm",
+        left: margin,
+        right: margin,
       }}>
         <div style={{
           fontFamily: FONT,
           fontWeight: 300,
           fontStyle: "italic",
-          fontSize: "60pt",
+          fontSize: "52pt",
           lineHeight: 1,
           letterSpacing: "-0.03em",
-          color: PALETTE.white,
+          color: PALETTE.textInk,
         }}>
           AI<br />
           is the<br />
           <span style={{ color: PALETTE.maroon, fontStyle: "normal", fontWeight: 900 }}>new gas.</span>
         </div>
-        <div style={{ height: "12mm" }} />
+        <div style={{ height: "10mm" }} />
         <Hairline length="40mm" thickness="0.5mm" />
-        <div style={{ height: "6mm" }} />
+        <div style={{ height: "5mm" }} />
         <div style={{
           fontFamily: FONT,
           fontWeight: 700,
@@ -294,11 +309,10 @@ export function BackPanel({ showGuides = false }: { showGuides?: boolean }) {
         </div>
       </div>
 
-      {/* ── Coordonnées en bas-droit ── */}
       <div style={{
         position: "absolute",
-        bottom: "16mm",
-        right: "16mm",
+        bottom: margin,
+        right: margin,
         textAlign: "right",
       }}>
         <Eyebrow color={PALETTE.maroon} size={7}>Contact</Eyebrow>
@@ -307,7 +321,7 @@ export function BackPanel({ showGuides = false }: { showGuides?: boolean }) {
           fontFamily: FONT,
           fontSize: "10pt",
           fontWeight: 500,
-          color: PALETTE.white,
+          color: PALETTE.textInk,
           lineHeight: 1.4,
         }}>
           Doha · Qatar<br />
@@ -316,19 +330,18 @@ export function BackPanel({ showGuides = false }: { showGuides?: boolean }) {
         </div>
       </div>
 
-      {/* ── Mention légale en bas-gauche ── */}
       <div style={{
         position: "absolute",
-        bottom: "16mm",
-        left: "16mm",
+        bottom: margin,
+        left: margin,
         right: "80mm",
         fontFamily: FONT,
-        fontSize: "6pt",
+        fontSize: "7pt",
         fontWeight: 400,
-        letterSpacing: "0.1em",
-        color: PALETTE.silver,
+        letterSpacing: "0.08em",
+        color: PALETTE.textMuted,
         textTransform: "uppercase",
-        lineHeight: 1.4,
+        lineHeight: 1.45,
       }}>
         Issued under QFC Authority oversight · PDPPL Law 13/2016 compliant<br />
         © 2030 Futur One Datacenter LLC · Confidential
@@ -337,43 +350,28 @@ export function BackPanel({ showGuides = false }: { showGuides?: boolean }) {
   );
 }
 
-// ═════════════════════════════════════════════════════════════════════════
-// INSIDE LEFT — Manifesto sovereign + Phrase 2 VC + Opportunity
-//
-// Structure v4 (sovereign deal-signing) :
-//  - Header eyebrow + index 01/04
-//  - Title FUTUR ONE / NO LIMITS, BY AI. (twin 44pt avec Inside Right)
-//  - Phrase 1 verbatim (Hub by Hearst Qatar, manifesto quote)
-//  - Photo héro inside-left.png 60mm full-bleed L/R, DUOTONE maroon+noir
-//  - Eyebrow vertical droite : DOHA · 17 HA · TIER IV (rotation 90°)
-//  - Phrase 2 verbatim (VC selectivity context — texte seul, sans bars)
-//  - Bandeau bottom Opportunity 70mm avec watermark facade duotone
-//
-// SUPPRIMÉS (vs v3) :
-//  - Section 4 verrous (LIMITED BY TECH / DEPENDENT / HIGH COSTS / CREATIVITY)
-//  - Bars Before AI / With AI (migrent vers schéma incubation Inside Right)
-// ═════════════════════════════════════════════════════════════════════════
+// INSIDE LEFT — manifesto, Why now, photo, Capital Discipline, bande Opportunity (`INSIDE_LEFT_OPPORTUNITY_BAND_MM`).
 
 export function InsideLeftPanel({ showGuides = false }: { showGuides?: boolean }) {
   const heroImg = "/leaflet-qatar/inside-left.png";
   const bgImg   = "/leaflet-qatar/cover-facade.png";
   return (
-    <Panel bg={PALETTE.black} showGuides={showGuides} label="Intérieur gauche">
+    <Panel bg={PALETTE.paper} showGuides={showGuides} label="Intérieur gauche">
 
       {/* ═══ TOP : eyebrow + index ═══ */}
       <div style={{
-        position: "absolute", top: "16mm", left: "16mm", right: "16mm",
+        position: "absolute", top: margin, left: margin, right: margin,
         display: "flex", justifyContent: "space-between",
       }}>
         <Eyebrow color={PALETTE.maroon}>Aligned with QNV 2030</Eyebrow>
-        <Eyebrow color={PALETTE.silver}>01 / 04</Eyebrow>
+        <Eyebrow color={PALETTE.textMuted}>01 / 04</Eyebrow>
       </div>
 
-      {/* ── Title twin (Asymétrie : plus haut que la droite) ── */}
+      {/* Title aligné intérieur droit : 44pt / leading 0.82 / textInk (symétrie avec gauche). */}
       <div style={{
-        position: "absolute", top: "24mm", left: "16mm", right: "16mm",
+        position: "absolute", top: "24mm", left: margin, right: margin,
         fontFamily: FONT, fontWeight: 900, fontSize: "44pt",
-        lineHeight: 0.82, letterSpacing: "-0.04em", color: PALETTE.white,
+        lineHeight: 0.82, letterSpacing: "-0.04em", color: PALETTE.textInk,
         zIndex: 2,
       }}>
         FUTUR ONE<br />
@@ -382,7 +380,7 @@ export function InsideLeftPanel({ showGuides = false }: { showGuides?: boolean }
 
       {/* ── Eyebrow vertical droite ── */}
       <div style={{
-        position: "absolute", top: "60mm", right: "16mm",
+        position: "absolute", top: "60mm", right: margin,
         transform: "rotate(90deg)",
         transformOrigin: "right top",
       }}>
@@ -391,9 +389,9 @@ export function InsideLeftPanel({ showGuides = false }: { showGuides?: boolean }
 
       {/* ── PHRASE 1 ── */}
       <div style={{
-        position: "absolute", top: "54mm", left: "16mm", right: "32mm",
+        position: "absolute", top: "54mm", left: margin, right: "32mm",
         fontFamily: FONT, fontSize: "9pt", fontWeight: 400,
-        lineHeight: 1.5, color: PALETTE.white,
+        lineHeight: 1.5, color: PALETTE.textInk,
         zIndex: 2,
       }}>
         <span style={{ fontWeight: 900 }}>FUTUR ONE</span> is an AI sovereign innovation hub operated by <span style={{ fontWeight: 900 }}>Hearst Qatar</span> in partnership with top-tier global players.
@@ -405,9 +403,9 @@ export function InsideLeftPanel({ showGuides = false }: { showGuides?: boolean }
 
       {/* ── WHY NOW (NEW) ── */}
       <div style={{
-        position: "absolute", top: "84mm", left: "16mm", right: "16mm",
+        position: "absolute", top: "84mm", left: margin, right: margin,
         fontFamily: FONT, fontSize: "8pt", fontWeight: 400,
-        lineHeight: 1.2, color: PALETTE.silver,
+        lineHeight: 1.35, color: PALETTE.textMuted,
         zIndex: 2,
       }}>
         AI infrastructure is entering a phase of structural scarcity.<br />
@@ -415,7 +413,7 @@ export function InsideLeftPanel({ showGuides = false }: { showGuides?: boolean }
         Nations that fail to build integrated ecosystems<br />
         will lose long-term strategic positioning.<br /><br />
         <span style={{ color: PALETTE.maroon }}>Global AI compute demand is expected to increase ×4.2 by 2030.</span><br />
-        <span style={{ fontSize: "6pt" }}>(Source: IDC)</span>
+        <span style={{ fontSize: "6.5pt", color: PALETTE.textMuted }}>(Source: IDC)</span>
       </div>
 
       {/* ═══ PHOTO HERO ═══ */}
@@ -433,7 +431,7 @@ export function InsideLeftPanel({ showGuides = false }: { showGuides?: boolean }
           opacity: 0.4,
         }} />
         <div style={{
-          position: "absolute", bottom: "4mm", right: "16mm",
+          position: "absolute", bottom: "4mm", right: margin,
           fontFamily: FONT, fontSize: "6pt", fontWeight: 700,
           letterSpacing: "0.15em", color: PALETTE.white, textTransform: "uppercase",
         }}>
@@ -443,7 +441,7 @@ export function InsideLeftPanel({ showGuides = false }: { showGuides?: boolean }
 
       {/* ═══ PHRASE 2 ═══ */}
       <div style={{
-        position: "absolute", top: "156mm", left: "16mm", right: "16mm",
+        position: "absolute", top: "156mm", left: margin, right: margin,
       }}>
         <Hairline length="100%" thickness="0.5mm" />
         <div style={{ height: "4mm" }} />
@@ -451,7 +449,7 @@ export function InsideLeftPanel({ showGuides = false }: { showGuides?: boolean }
         <div style={{ height: "2mm" }} />
         <div style={{
           fontFamily: FONT, fontSize: "10pt", fontWeight: 400,
-          lineHeight: 1.5, color: PALETTE.white,
+          lineHeight: 1.5, color: PALETTE.textInk,
         }}>
           VCs are becoming increasingly selective, prioritizing <span style={{ fontWeight: 900 }}>capital efficiency</span>
           {" "}and <span style={{ fontWeight: 900 }}>sustainable business models</span>
@@ -461,17 +459,17 @@ export function InsideLeftPanel({ showGuides = false }: { showGuides?: boolean }
         </div>
       </div>
 
-      {/* ═══ OPPORTUNITY 100mm — tagline + body + 4 secteurs + source + watermark ═══ */}
+      {/* ═══ OPPORTUNITY (INSIDE_LEFT_OPPORTUNITY_BAND_MM) — tagline + body + 4 secteurs + source + watermark ═══ */}
       <div style={{
-        position: "absolute", bottom: 0, left: 0, right: 0, height: "100mm",
-        backgroundColor: PALETTE.ink,
+        position: "absolute", bottom: 0, left: 0, right: 0, height: `${INSIDE_LEFT_OPPORTUNITY_BAND_MM}mm`,
+        backgroundColor: PALETTE.mist,
         overflow: "hidden",
       }}>
         {/* Titre de section MASSIF en arrière-plan */}
         <div style={{
           position: "absolute", top: "5mm", left: "-10mm",
           fontFamily: FONT, fontWeight: 900, fontSize: "110pt",
-          color: PALETTE.white, opacity: 0.05, letterSpacing: "-0.05em",
+          color: PALETTE.textInk, opacity: 0.06, letterSpacing: "-0.05em",
           whiteSpace: "nowrap", pointerEvents: "none",
         }}>
           OPPORTUNITY
@@ -481,11 +479,11 @@ export function InsideLeftPanel({ showGuides = false }: { showGuides?: boolean }
           position: "absolute", inset: 0,
           backgroundImage: `url(${bgImg})`,
           backgroundSize: "cover", backgroundPosition: "center",
-          opacity: 0.20,
+          opacity: 0.08,
         }} />
         <div style={{
           position: "absolute", inset: 0,
-          background: `linear-gradient(180deg, ${PALETTE.ink}E5 0%, ${PALETTE.ink}F2 100%)`,
+          background: `linear-gradient(180deg, ${PALETTE.mist}E8 0%, ${PALETTE.bandSurface} 100%)`,
         }} />
 
         {/* Filigrane H Hearst */}
@@ -503,7 +501,7 @@ export function InsideLeftPanel({ showGuides = false }: { showGuides?: boolean }
         {/* Contenu */}
         <div style={{
           position: "absolute",
-          top: "10mm", left: "16mm", right: "16mm", bottom: "8mm",
+          top: "10mm", left: margin, right: margin, bottom: "8mm",
         }}>
           <div style={{ 
             position: "absolute", top: "0", left: "-16mm", right: "0",
@@ -512,12 +510,12 @@ export function InsideLeftPanel({ showGuides = false }: { showGuides?: boolean }
           <div style={{ height: "8mm" }} />
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
             <Eyebrow color={PALETTE.maroon}>The Opportunity</Eyebrow>
-            <Eyebrow color={PALETTE.silver} size={6}>MENA · 2024–2030</Eyebrow>
+            <Eyebrow color={PALETTE.textMuted} size={6}>MENA · 2024–2030</Eyebrow>
           </div>
           <div style={{ height: "6mm" }} />
           <div style={{
             fontFamily: FONT, fontStyle: "italic", fontWeight: 300,
-            fontSize: "20pt", lineHeight: 1.1, color: PALETTE.white,
+            fontSize: "20pt", lineHeight: 1.1, color: PALETTE.textInk,
             letterSpacing: "-0.02em",
           }}>
             High-potential founders.<br />
@@ -529,7 +527,7 @@ export function InsideLeftPanel({ showGuides = false }: { showGuides?: boolean }
           <div style={{ height: "5mm" }} />
           <div style={{
             fontFamily: FONT, fontSize: "8.5pt", fontWeight: 400,
-            lineHeight: 1.4, color: PALETTE.white,
+            lineHeight: 1.4, color: PALETTE.textInk,
           }}>
             <span style={{ fontWeight: 900 }}>FUTUR ONE</span> concentrates compute, capital and living infrastructure into one controlled environment designed to accelerate company creation and scale.
           </div>
@@ -543,8 +541,8 @@ export function InsideLeftPanel({ showGuides = false }: { showGuides?: boolean }
               <div key={sector}>
                 <div style={{
                   fontFamily: FONT, fontWeight: 900, fontSize: "28pt",
-                  color: PALETTE.white, letterSpacing: "-0.04em", lineHeight: 1,
-                }}>__%</div>
+                  color: PALETTE.textInk, letterSpacing: "-0.04em", lineHeight: 1,
+                }}>—</div>
                 <div style={{ height: "3mm" }} />
                 <div style={{ width: "40%", height: "1.5mm", backgroundColor: PALETTE.maroon }} />
                 <div style={{ height: "3mm" }} />
@@ -559,10 +557,10 @@ export function InsideLeftPanel({ showGuides = false }: { showGuides?: boolean }
           {/* Source caption */}
           <div style={{ height: "4mm" }} />
           <div style={{
-            fontFamily: FONT, fontSize: "5pt", fontWeight: 400,
-            color: PALETTE.silver, letterSpacing: "0.04em",
+            fontFamily: FONT, fontSize: "5.5pt", fontWeight: 400,
+            color: PALETTE.textMuted, letterSpacing: "0.04em",
           }}>
-            % high-potential start-ups underfunded by sector · 2025 · sources : MAGNiTT MENA Venture Investment Report 2024 · Startup Genome GSER 2024 · McKinsey MENA Tech Outlook 2030.
+            Sector weights · indicative · to be aligned with latest MAGNiTT / GSER / regional outlook sources before publication. Historical framing: MENA venture reports (e.g. MAGNiTT 2024, Startup Genome GSER 2024).
           </div>
         </div>
       </div>
@@ -571,31 +569,11 @@ export function InsideLeftPanel({ showGuides = false }: { showGuides?: boolean }
   );
 }
 
-// ═════════════════════════════════════════════════════════════════════════
-// INSIDE RIGHT — THE METHOD (incubation schema + retention proof + closing)
-//
-// Structure v4 (sovereign deal-signing) :
-//  - Header eyebrow + index 02/04
-//  - Title THE METHOD. (twin 44pt avec Inside Left — Pentagram OpenSpace 2020)
-//  - Phrase 3 verbatim raccourci (Hearst Qatar develops largest DC)
-//  - SCHÉMA INCUBATION (100mm) :
-//      * Comparison strip MENA accelerator avg ~30% vs FUTUR ONE 70% follow-on funding rate at 18 mo
-//      * Timeline hairline + chiffres 36pt 4 stages (Mevis & Van Deursen, AUCUNE card)
-//      * Ratios strip + benchmarks YC/Antler/MISK
-//  - Bandeau noir bleed bottom 70mm avec watermark facade duotone :
-//      * BUILT BY (Hearst Qatar · Norman Foster · JB Pastor — fallback texte)
-//      * Technology stack (In discussion with Tier-1 hyperscalers — pas de marques tant que LOI/MoU non signés)
-//      * 4 KPIs (150 startups · 4K residents · 100K SQM · €400M)
-//      * Punchline « Sovereign by design. Global by intent. »
-//      * Qatar Label (0% TAX · FAST SETUP · HOUSING · etc.)
-//
-// + Filet maroon vertical 0.5mm au pli (côté gauche page) — M/M Paris pour Vuitton
-// ═════════════════════════════════════════════════════════════════════════
+// INSIDE RIGHT — méthode, matrices follow-on, tableau phases, blocs Selection / Doctrine / Timeline / Risk ; bande bas (`INSIDE_RIGHT_BOTTOM_BAND_MM`, rendue sous le bloc données dans le DOM).
 
 export function InsideRightPanel({ showGuides = false }: { showGuides?: boolean }) {
   const bgImg = "/leaflet-qatar/cover-facade.png";
 
-  // 4 stages d'incubation (sourcé du PDF V3)
   const stages = [
     { n: "01", name: "INCUBATE",   stage: "Pre-seed → Seed",   duration: "3-6 mo",  batch: "20-30 / batch" },
     { n: "02", name: "ACCELERATE", stage: "Seed → Series A",   duration: "6-9 mo",  batch: "20-30 / cohort" },
@@ -611,17 +589,163 @@ export function InsideRightPanel({ showGuides = false }: { showGuides?: boolean 
   ];
 
   return (
-    <Panel bg={PALETTE.white} showGuides={showGuides} label="Intérieur droit">
+    <Panel bg={PALETTE.paper} showGuides={showGuides} label="Intérieur droit">
 
       {/* ── Filet maroon vertical au pli central (côté gauche) ── */}
       <div style={{
         position: "absolute", top: 0, bottom: 0, left: 0,
-        width: "0.5mm", backgroundColor: PALETTE.maroon,
+        width: "0.5mm", backgroundColor: PALETTE.maroon, zIndex: 10,
       }} />
+
+      {/* ═══ BANDEAU BOTTOM — rendu en premier (sous le bloc données) pour ne plus masquer les graphiques ═══ */}
+      <div style={{
+        position: "absolute", bottom: 0, left: 0, right: 0, height: `${INSIDE_RIGHT_BOTTOM_BAND_MM}mm`,
+        backgroundColor: PALETTE.mist, overflow: "hidden",
+      }}>
+        {/* Titre de section MASSIF — tout au fond (sous photos / verres) */}
+        <div style={{
+          position: "absolute", top: "5mm", right: "-10mm",
+          fontFamily: FONT, fontWeight: 900, fontSize: "140pt",
+          color: PALETTE.textInk, opacity: 0.04, letterSpacing: "-0.05em",
+          whiteSpace: "nowrap", pointerEvents: "none", textAlign: "right",
+          zIndex: 0,
+        }}>
+          CAMPUS
+        </div>
+        {/* Watermark façade sur tout le bandeau */}
+        <div style={{
+          position: "absolute", inset: 0,
+          backgroundImage: `url(${bgImg})`,
+          backgroundSize: "cover", backgroundPosition: "center", opacity: 0.08,
+          zIndex: 0,
+        }} />
+        <div style={{
+          position: "absolute", inset: 0,
+          background: `linear-gradient(180deg, ${PALETTE.mist}EB 0%, ${PALETTE.bandSurface} 100%)`,
+          zIndex: 0,
+        }} />
+
+        {/* Bande photo haute — transition visuelle entre zone blanche et bloc « Built by » */}
+        <div
+          aria-hidden
+          style={{
+            position: "absolute", top: 0, left: 0, right: 0,
+            height: `${INSIDE_RIGHT_BAND_PHOTO_STRIP_MM}mm`,
+            backgroundImage: `url(${bgImg})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center 35%",
+            zIndex: 1,
+          }}
+        />
+        <div
+          aria-hidden
+          style={{
+            position: "absolute", top: 0, left: 0, right: 0,
+            height: `${INSIDE_RIGHT_BAND_PHOTO_STRIP_MM}mm`,
+            backgroundColor: PALETTE.maroon,
+            mixBlendMode: "multiply",
+            opacity: 0.22,
+            zIndex: 2,
+          }}
+        />
+        <div
+          aria-hidden
+          style={{
+            position: "absolute", top: 0, left: 0, right: 0,
+            height: `${INSIDE_RIGHT_BAND_PHOTO_STRIP_MM}mm`,
+            background: `linear-gradient(180deg, transparent 0%, ${PALETTE.mist} 96%)`,
+            zIndex: 3,
+          }}
+        />
+        <div
+          aria-hidden
+          style={{
+            position: "absolute",
+            top: `${INSIDE_RIGHT_BAND_PHOTO_STRIP_MM}mm`,
+            left: 0, right: 0,
+            height: "0.6mm",
+            backgroundColor: PALETTE.maroon,
+            zIndex: 4,
+          }}
+        />
+
+        {/* Filigrane H Hearst */}
+        <HLogo size="120mm" color={PALETTE.maroon} opacity={0.03} style={{ position: "absolute", top: "14mm", right: "-40mm", zIndex: 4 }} />
+
+        {/* Contenu texte — sous la bande photo */}
+        <div style={{
+          position: "absolute",
+          top: `${INSIDE_RIGHT_BAND_PHOTO_STRIP_MM + 2}mm`,
+          left: margin,
+          right: margin,
+          bottom: "5mm",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          zIndex: 5,
+        }}>
+          
+          <div>
+            <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: "6mm" }}>
+              <div>
+                <Eyebrow color={PALETTE.maroon} size={6}>Built by</Eyebrow>
+                <div style={{ height: "2mm" }} />
+                <div style={{ fontFamily: FONT, fontSize: "8pt", fontWeight: 500, color: PALETTE.textInk, lineHeight: 1.4 }}>
+                  <span style={{ fontWeight: 700 }}>Hearst Qatar</span> — Sovereign Project Initiator &amp; Strategic Operator<br/>
+                  Designed by Pritzker Prize architect <span style={{ fontWeight: 700 }}>Lord Norman Foster</span><br/>
+                  Engineering &amp; Construction by <span style={{ fontWeight: 700 }}>JB Pastor &amp; Fils, Monaco</span>
+                </div>
+              </div>
+              <div>
+                <Eyebrow color={PALETTE.textMuted} size={6}>Technology stack</Eyebrow>
+                <div style={{ height: "2mm" }} />
+                <div style={{ fontFamily: FONT, fontSize: "8pt", fontWeight: 500, color: PALETTE.textMuted, lineHeight: 1.4 }}>
+                  In discussion with Tier-1 hyperscalers and silicon partners.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Grille KPIs Extrême */}
+          <div>
+            <Hairline length="100%" thickness="0.3mm" />
+            <div style={{ height: "3mm" }} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4mm" }}>
+              {kpis.map((k, i) => (
+                <div key={i} style={{ borderLeft: `1px solid ${PALETTE.dividerSubtle}`, paddingLeft: "3mm" }}>
+                  <div style={{ fontFamily: FONT, fontWeight: 900, fontSize: "32pt", color: PALETTE.textInk, lineHeight: 0.9, letterSpacing: "-0.04em" }}>{k.v}</div>
+                  <div style={{ height: "1mm" }} />
+                  <div style={{ fontFamily: FONT, fontSize: "5.5pt", fontWeight: 700, color: PALETTE.maroon, textTransform: "uppercase", letterSpacing: "0.15em" }}>{k.l}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Punchline & Label */}
+          <div>
+            <Hairline length="100%" thickness="0.3mm" />
+            <div style={{ height: "3mm" }} />
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+              <div style={{ fontFamily: FONT, fontWeight: 700, fontSize: "18pt", lineHeight: 1.08, color: PALETTE.textInk, letterSpacing: "-0.02em" }}>
+                Sovereign by design.<br />
+                <span style={{ color: PALETTE.maroon, fontWeight: 900 }}>Global by intent.</span>
+              </div>
+              <div style={{ textAlign: "right", maxWidth: "55%" }}>
+                <div style={{ fontFamily: FONT, fontSize: "5.5pt", fontWeight: 500, color: PALETTE.textMuted, letterSpacing: "0.1em", lineHeight: 1.4 }}>
+                  <span style={{ color: PALETTE.graphite, fontWeight: 700 }}>QATAR LABEL PROGRAM</span> · Official certification for high-potential companies.<br/>
+                  • 0% tax environment • Fast company setup &amp; full ownership<br/>
+                  • Housing, education, healthcare packages
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
 
       {/* ═══ HEADER COMPRESSÉ ═══ */}
       <div style={{
-        position: "absolute", top: "16mm", left: "16mm", right: "16mm",
+        position: "absolute", top: margin, left: margin, right: margin,
         display: "flex", justifyContent: "space-between", alignItems: "baseline",
         borderBottom: `0.5mm solid ${PALETTE.maroon}`,
         paddingBottom: "4mm",
@@ -629,58 +753,114 @@ export function InsideRightPanel({ showGuides = false }: { showGuides?: boolean 
       }}>
         <div style={{
           fontFamily: FONT, fontWeight: 900, fontSize: "44pt",
-          lineHeight: 0.8, letterSpacing: "-0.04em", color: PALETTE.ink,
+          lineHeight: 0.82, letterSpacing: "-0.04em", color: PALETTE.textInk,
         }}>
           THE <span style={{ color: PALETTE.maroon }}>METHOD.</span>
         </div>
-        <Eyebrow color={PALETTE.silver}>02 / 04</Eyebrow>
+        <Eyebrow color={PALETTE.textMuted}>02 / 04</Eyebrow>
       </div>
 
       {/* ── PHRASE 3 ── */}
       <div style={{
-        position: "absolute", top: "38mm", left: "16mm", right: "16mm",
+        position: "absolute", top: "38mm", left: margin, right: margin,
         fontFamily: FONT, fontSize: "8.5pt", fontWeight: 400,
         lineHeight: 1.4, color: PALETTE.graphite,
       }}>
-        <span style={{ color: PALETTE.ink, fontWeight: 700 }}>Hearst Qatar</span>
+        <span style={{ color: PALETTE.textInk, fontWeight: 700 }}>Hearst Qatar</span>
         {" "}is developing one of the largest data centers in the region to provide dedicated energy and{" "}
-        <span style={{ color: PALETTE.ink, fontWeight: 700 }}>HPC capacity</span>
+        <span style={{ color: PALETTE.textInk, fontWeight: 700 }}>HPC capacity</span>
         {" "}to startups, established enterprises, and major private-sector players establishing operations locally, with sovereign wealth funds as anchor stakeholders.
         <br /><br />
         <span style={{ color: PALETTE.maroon, fontWeight: 700 }}>This ensures priority access to compute, long-term cost control and strategic independence.</span>
       </div>
 
-      {/* ═══ DATA MATRIX & TABLEAU TECHNIQUE ═══ */}
+      {/* ═══ DATA MATRIX & TABLEAU TECHNIQUE — clip + au-dessus du bandeau bas (DOM + z-index) ═══ */}
       <div style={{
-        position: "absolute", top: "66mm", left: "16mm", right: "16mm",
+        position: "absolute",
+        top: "66mm",
+        left: margin,
+        right: margin,
+        bottom: `${INSIDE_RIGHT_RESERVED_BOTTOM_MM}mm`,
+        overflow: "hidden",
+        zIndex: 4,
+        isolation: "isolate",
+        backgroundColor: PALETTE.paper,
+        contain: "paint",
       }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
           <Eyebrow color={PALETTE.maroon}>Follow-on funding rate at 18 months</Eyebrow>
-          <div style={{ fontFamily: FONT, fontWeight: 900, fontSize: "20pt", color: PALETTE.maroon, lineHeight: 0.8 }}>70%</div>
+          <span style={{
+            fontFamily: FONT,
+            fontSize: "6.5pt",
+            fontWeight: 600,
+            color: PALETTE.graphite,
+            letterSpacing: "0.14em",
+            textTransform: "uppercase",
+          }}>
+            Indexed comparison · same cell grid for both scenarios
+          </span>
         </div>
         <div style={{ height: "2mm" }} />
-        
-        {/* Data Matrix + Quote côte à côte */}
-        <div style={{ display: "flex", gap: "6mm" }}>
-          <div style={{ width: "25mm" }}>
-            <Eyebrow color={PALETTE.silver} size={4}>MENA (~30%)</Eyebrow>
-            <div style={{ height: "1mm" }} />
+
+        {/* Matrices : grille 2×2 (alignement) + 70% ancré au-dessus de la colonne Futur One + strip synthèse */}
+        <div style={{ display: "flex", gap: "6mm", alignItems: "flex-start" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "25mm 25mm",
+              columnGap: "6mm",
+              rowGap: "1mm",
+              flexShrink: 0,
+            }}
+          >
+            <Eyebrow color={PALETTE.textMuted} size={4}>MENA (~30%)</Eyebrow>
+            <div>
+              <div style={{ fontFamily: FONT, fontWeight: 900, fontSize: "20pt", color: PALETTE.maroon, lineHeight: 0.85 }}>
+                70%
+              </div>
+              <div style={{
+                fontFamily: FONT,
+                fontSize: "5.5pt",
+                fontWeight: 500,
+                color: PALETTE.textMuted,
+                letterSpacing: "0.04em",
+                lineHeight: 1.3,
+                marginTop: "0.6mm",
+              }}>
+                Programme target (≈70% follow-on design intent)
+              </div>
+              <div style={{ height: "1.5mm" }} />
+              <Eyebrow color={PALETTE.maroon} size={4}>FUTUR ONE (70%)</Eyebrow>
+            </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(10, 1fr)", gap: "0.5mm" }}>
               {Array.from({ length: 100 }, (_, i) => (
-                <div key={i} style={{ aspectRatio: "1", backgroundColor: i < 30 ? PALETTE.silver : PALETTE.smoke }} />
+                <div key={`m-${i}`} style={{ aspectRatio: "1", backgroundColor: i < 30 ? PALETTE.silver : PALETTE.smoke }} />
               ))}
             </div>
-          </div>
-          <div style={{ width: "25mm" }}>
-            <Eyebrow color={PALETTE.maroon} size={4}>FUTUR ONE (70%)</Eyebrow>
-            <div style={{ height: "1mm" }} />
             <div style={{ display: "grid", gridTemplateColumns: "repeat(10, 1fr)", gap: "0.5mm" }}>
               {Array.from({ length: 100 }, (_, i) => (
-                <div key={i} style={{ aspectRatio: "1", backgroundColor: i < 70 ? PALETTE.maroon : PALETTE.smoke }} />
+                <div key={`f-${i}`} style={{ aspectRatio: "1", backgroundColor: i < 70 ? PALETTE.maroon : PALETTE.smoke }} />
               ))}
             </div>
+            <div style={{ gridColumn: "1 / -1", marginTop: "1.5mm" }}>
+              <div style={{ display: "flex", height: "2.2mm", borderRadius: "0.35mm", overflow: "hidden" }}>
+                <div style={{ width: "30%", backgroundColor: PALETTE.silver }} aria-hidden />
+                <div style={{ width: "70%", backgroundColor: PALETTE.maroon }} aria-hidden />
+              </div>
+              <div style={{
+                fontFamily: FONT,
+                fontSize: "5pt",
+                fontWeight: 500,
+                color: PALETTE.textMuted,
+                letterSpacing: "0.04em",
+                lineHeight: 1.35,
+                marginTop: "0.8mm",
+              }}>
+                Proportion of shaded cells above: ≈30% regional benchmark vs ≈70% programme target.
+              </div>
+            </div>
           </div>
-          <div style={{ flex: 1, paddingLeft: "6mm", borderLeft: `0.5mm solid ${PALETTE.smoke}`, display: "flex", alignItems: "center" }}>
+          <div style={{ flex: 1, paddingLeft: "6mm", borderLeft: `0.5mm solid ${PALETTE.dividerSubtle}`, display: "flex", alignItems: "center", minWidth: 0 }}>
             <div style={{
               fontFamily: FONT, fontStyle: "italic", fontWeight: 300,
               fontSize: "11pt", lineHeight: 1.2, color: PALETTE.maroon,
@@ -690,35 +870,44 @@ export function InsideRightPanel({ showGuides = false }: { showGuides?: boolean 
           </div>
         </div>
 
-        <div style={{ height: "4mm" }} />
+        <div style={{ height: "2mm" }} />
+        <div style={{
+          fontFamily: FONT, fontSize: "5.5pt", fontWeight: 500,
+          color: PALETTE.textMuted, letterSpacing: "0.04em", lineHeight: 1.35,
+        }}>
+          <span style={{ color: PALETTE.textInk, fontWeight: 700 }}>Density benchmarks</span>
+          {" "}— selection and cohort design informed by global best practice (YC-class deal flow, Antler-style residency, MISK-aligned regional pipeline).
+        </div>
 
-        {/* Tableau technique ultra-dense */}
-        <div style={{ borderTop: `0.5mm solid ${PALETTE.ink}`, borderBottom: `0.5mm solid ${PALETTE.ink}` }}>
-          <div style={{ display: "grid", gridTemplateColumns: "0.5fr 1.5fr 1fr 1fr 1fr", padding: "1mm 0", borderBottom: `0.2mm solid ${PALETTE.smoke}` }}>
-            <Eyebrow color={PALETTE.silver} size={4}>ID</Eyebrow>
-            <Eyebrow color={PALETTE.silver} size={4}>PHASE</Eyebrow>
-            <Eyebrow color={PALETTE.silver} size={4}>STAGE</Eyebrow>
-            <Eyebrow color={PALETTE.silver} size={4}>DURATION</Eyebrow>
-            <Eyebrow color={PALETTE.silver} size={4}>CAPACITY</Eyebrow>
+        <div style={{ height: "2mm" }} />
+
+        {/* Phases d’incubation */}
+        <div style={{ borderTop: `0.35mm solid ${PALETTE.textInk}`, borderBottom: `0.35mm solid ${PALETTE.textInk}` }}>
+          <div style={{ display: "grid", gridTemplateColumns: "0.5fr 1.5fr 1fr 1fr 1fr", padding: "1mm 0", borderBottom: `0.2mm solid ${PALETTE.dividerSubtle}` }}>
+            <Eyebrow color={PALETTE.textMuted} size={4}>ID</Eyebrow>
+            <Eyebrow color={PALETTE.textMuted} size={4}>PHASE</Eyebrow>
+            <Eyebrow color={PALETTE.textMuted} size={4}>STAGE</Eyebrow>
+            <Eyebrow color={PALETTE.textMuted} size={4}>DURATION</Eyebrow>
+            <Eyebrow color={PALETTE.textMuted} size={4}>CAPACITY</Eyebrow>
           </div>
           {stages.map((s, i) => (
             <div key={s.n} style={{ 
               display: "grid", gridTemplateColumns: "0.5fr 1.5fr 1fr 1fr 1fr", padding: "1.5mm 0",
-              borderBottom: i < stages.length - 1 ? `0.2mm solid ${PALETTE.smoke}` : "none",
+              borderBottom: i < stages.length - 1 ? `0.2mm solid ${PALETTE.dividerSubtle}` : "none",
               alignItems: "center"
             }}>
               <div style={{ fontFamily: FONT, fontWeight: 900, fontSize: "8pt", color: PALETTE.maroon }}>{s.n}</div>
-              <div style={{ fontFamily: FONT, fontWeight: 700, fontSize: "6pt", color: PALETTE.ink, textTransform: "uppercase", letterSpacing: "0.05em" }}>{s.name}</div>
-              <div style={{ fontFamily: FONT, fontWeight: 500, fontSize: "6pt", color: PALETTE.graphite }}>{s.stage}</div>
-              <div style={{ fontFamily: FONT, fontWeight: 500, fontSize: "6pt", color: PALETTE.graphite }}>{s.duration}</div>
-              <div style={{ fontFamily: FONT, fontWeight: 500, fontSize: "6pt", color: PALETTE.graphite }}>{s.batch}</div>
+              <div style={{ fontFamily: FONT, fontWeight: 700, fontSize: "6.5pt", color: PALETTE.textInk, textTransform: "uppercase", letterSpacing: "0.05em" }}>{s.name}</div>
+              <div style={{ fontFamily: FONT, fontWeight: 500, fontSize: "6.5pt", color: PALETTE.graphite }}>{s.stage}</div>
+              <div style={{ fontFamily: FONT, fontWeight: 500, fontSize: "6.5pt", color: PALETTE.graphite }}>{s.duration}</div>
+              <div style={{ fontFamily: FONT, fontWeight: 500, fontSize: "6.5pt", color: PALETTE.graphite }}>{s.batch}</div>
             </div>
           ))}
         </div>
 
-        <div style={{ height: "4mm" }} />
+        <div style={{ height: "2mm" }} />
         
-        {/* Nouveaux blocs: Selection, Doctrine, Timeline, Risk */}
+        {/* Selection, Doctrine, Timeline, Risk */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4mm" }}>
           <div>
             <Eyebrow color={PALETTE.maroon} size={5}>Selection</Eyebrow>
@@ -740,7 +929,7 @@ export function InsideRightPanel({ showGuides = false }: { showGuides?: boolean 
           </div>
         </div>
 
-        <div style={{ height: "3mm" }} />
+        <div style={{ height: "2mm" }} />
         
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4mm" }}>
           <div>
@@ -754,7 +943,7 @@ export function InsideRightPanel({ showGuides = false }: { showGuides?: boolean 
           <div>
             <Eyebrow color={PALETTE.maroon} size={5}>Risk Management</Eyebrow>
             <div style={{ height: "1mm" }} />
-            <div style={{ fontFamily: FONT, fontSize: "6pt", color: PALETTE.graphite, lineHeight: 1.3 }}>
+            <div style={{ fontFamily: FONT, fontSize: "6.5pt", color: PALETTE.graphite, lineHeight: 1.3 }}>
               <span style={{ fontWeight: 700 }}>Construction risk</span> managed by Hearst Qatar and Tier-1 partners.<br/>
               <span style={{ fontWeight: 700 }}>Technology risk</span> mitigated through hyperscaler collaboration.<br/>
               <span style={{ fontWeight: 700 }}>Market risk</span> reduced through sovereign-backed pipeline.
@@ -764,96 +953,6 @@ export function InsideRightPanel({ showGuides = false }: { showGuides?: boolean 
 
       </div>
 
-      {/* ═══ BANDEAU BOTTOM DENSIFIÉ (90mm) ═══ */}
-      <div style={{
-        position: "absolute", bottom: 0, left: 0, right: 0, height: "90mm",
-        backgroundColor: PALETTE.ink, overflow: "hidden",
-      }}>
-        {/* Titre de section MASSIF en arrière-plan */}
-        <div style={{
-          position: "absolute", top: "5mm", right: "-10mm",
-          fontFamily: FONT, fontWeight: 900, fontSize: "140pt",
-          color: PALETTE.white, opacity: 0.03, letterSpacing: "-0.05em",
-          whiteSpace: "nowrap", pointerEvents: "none", textAlign: "right",
-        }}>
-          CAMPUS
-        </div>
-        {/* Photo facade duotone watermark */}
-        <div style={{
-          position: "absolute", inset: 0,
-          backgroundImage: `url(${bgImg})`,
-          backgroundSize: "cover", backgroundPosition: "center", opacity: 0.15,
-        }} />
-        <div style={{
-          position: "absolute", inset: 0,
-          background: `linear-gradient(180deg, ${PALETTE.ink}E5 0%, ${PALETTE.ink}F2 100%)`,
-        }} />
-
-        {/* Filigrane H Hearst */}
-        <HLogo size="120mm" color={PALETTE.maroon} opacity={0.03} style={{ position: "absolute", top: "10mm", right: "-40mm" }} />
-
-        {/* Contenu */}
-        <div style={{ position: "absolute", top: "8mm", left: "16mm", right: "16mm", bottom: "8mm", display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-          
-          <div>
-            <div style={{ position: "absolute", top: "-8mm", left: "0", right: "-16mm", height: "0.8mm", backgroundColor: PALETTE.maroon }} />
-            
-            <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: "6mm" }}>
-              <div>
-                <Eyebrow color={PALETTE.maroon} size={6}>Built by</Eyebrow>
-                <div style={{ height: "2mm" }} />
-                <div style={{ fontFamily: FONT, fontSize: "8pt", fontWeight: 500, color: PALETTE.white, lineHeight: 1.4 }}>
-                  <span style={{ fontWeight: 700 }}>Hearst Qatar</span> — Sovereign Project Initiator &amp; Strategic Operator<br/>
-                  Designed by Pritzker Prize architect <span style={{ fontWeight: 700 }}>Lord Norman Foster</span><br/>
-                  Engineering &amp; Construction by <span style={{ fontWeight: 700 }}>JB Pastor &amp; Fils, Monaco</span>
-                </div>
-              </div>
-              <div>
-                <Eyebrow color={PALETTE.silver} size={6}>Technology stack</Eyebrow>
-                <div style={{ height: "2mm" }} />
-                <div style={{ fontFamily: FONT, fontSize: "8pt", fontWeight: 500, color: PALETTE.silver, lineHeight: 1.4 }}>
-                  In discussion with Tier-1 hyperscalers and silicon partners.
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Grille KPIs Extrême */}
-          <div>
-            <Hairline length="100%" thickness="0.3mm" />
-            <div style={{ height: "3mm" }} />
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "4mm" }}>
-              {kpis.map((k, i) => (
-                <div key={i} style={{ borderLeft: `1px solid ${PALETTE.charcoal}`, paddingLeft: "3mm" }}>
-                  <div style={{ fontFamily: FONT, fontWeight: 900, fontSize: "32pt", color: PALETTE.white, lineHeight: 0.9, letterSpacing: "-0.04em" }}>{k.v}</div>
-                  <div style={{ height: "1mm" }} />
-                  <div style={{ fontFamily: FONT, fontSize: "5.5pt", fontWeight: 700, color: PALETTE.maroon, textTransform: "uppercase", letterSpacing: "0.15em" }}>{k.l}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Punchline & Label */}
-          <div>
-            <Hairline length="100%" thickness="0.3mm" />
-            <div style={{ height: "3mm" }} />
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-              <div style={{ fontFamily: FONT, fontWeight: 700, fontSize: "20pt", lineHeight: 1.05, color: PALETTE.white, letterSpacing: "-0.02em" }}>
-                Built in Qatar.<br />
-                <span style={{ color: PALETTE.maroon, fontWeight: 900 }}>Scaled to the world.</span>
-              </div>
-              <div style={{ textAlign: "right", maxWidth: "55%" }}>
-                <div style={{ fontFamily: FONT, fontSize: "5.5pt", fontWeight: 500, color: PALETTE.ash, letterSpacing: "0.1em", lineHeight: 1.4 }}>
-                  <span style={{ color: PALETTE.silver, fontWeight: 700 }}>QATAR LABEL PROGRAM</span> · Official certification for high-potential companies.<br/>
-                  • 0% tax environment • Fast company setup &amp; full ownership<br/>
-                  • Housing, education, healthcare packages
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
     </Panel>
   );
 }

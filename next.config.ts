@@ -5,6 +5,11 @@ const nextConfig: NextConfig = {
   // Suppress multiple lockfiles warning
   outputFileTracingRoot: path.join(__dirname),
 
+  /** Les clients demandent encore `/favicon.ico` ; on sert le même rendu que `app/icon.tsx`. */
+  async rewrites() {
+    return [{ source: "/favicon.ico", destination: "/icon" }];
+  },
+
   // Allow external image domains if needed later
   images: {
     remotePatterns: [

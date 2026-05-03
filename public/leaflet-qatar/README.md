@@ -1,12 +1,16 @@
-# Assets Plaquette Qatar
+# Assets plaquette Qatar
 
-Dépose ici les photos servant la plaquette `/leaflet/qatar` :
+Fichiers utilisés par `/leaflet/qatar` (servis sous `/leaflet-qatar/<filename>`) :
 
-| Fichier attendu | Usage |
-|---|---|
-| `datacenter.jpg` | Hero photo intérieur gauche (couloir serveurs rouges) |
-| `facade-01.jpg` à `facade-06.jpg` | Coque architecturale (réserve) |
-| `drone-campus.jpg` | Vue aérienne (réserve) |
+| Fichier | Usage |
+|--------|--------|
+| `cover-facade.png` | Couverture + watermarks bandeaux |
+| `back-cover.png` | Dos (bande photo haute) |
+| `inside-left.png` | Photo hero intérieur gauche |
+| `logo-hearst-h.svg` | Filigrane H (mask-image dans `panels.tsx`) |
 
-Une fois déposées, le navigateur les sert sous `/leaflet-qatar/<filename>`.
-Pas besoin de redémarrer le serveur — Next.js sert `/public/` à chaud.
+Pas besoin de redémarrer le serveur après ajout ou remplacement d’un fichier dans ce dossier.
+
+## Code
+
+Grille : `src/app/leaflet/qatar/design-tokens.ts` (`margin` = 16 mm, aligné sur `Panel.tsx` `showGuides`). Intérieur droit : réserve `INSIDE_RIGHT_RESERVED_BOTTOM_MM` ; bandeaux `INSIDE_LEFT_OPPORTUNITY_BAND_MM`, `INSIDE_RIGHT_BOTTOM_BAND_MM`. En dev : `npm run dev:clean`.
