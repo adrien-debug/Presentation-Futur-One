@@ -57,37 +57,76 @@ export default function TopBar({
 
   return (
     <header
-      className="flex items-center justify-between gap-4 px-3 py-2 border-b no-export"
+      className="flex items-center justify-between gap-5 no-export"
       style={{
-        borderColor: "var(--border-subtle)",
+        borderBottom: "1px solid var(--border-subtle)",
         backgroundColor: "var(--bg-panel)",
-        height: 48,
+        height: 52,
         flexShrink: 0,
+        paddingLeft: 14,
+        paddingRight: 14,
       }}
     >
       {/* LEFT — back + brand + project + page */}
-      <div className="flex items-center gap-3 flex-shrink-0 min-w-0">
+      <div className="flex items-center flex-shrink-0 min-w-0" style={{ gap: 14 }}>
         <Link
           href="/projects"
-          className="h-8 w-8 touch-target flex items-center justify-center transition-colors flex-shrink-0"
-          style={{ border: "1px solid var(--border-subtle)", color: "var(--fg-secondary)", backgroundColor: "var(--bg-elevated)" }}
+          className="touch-target flex items-center justify-center transition-colors flex-shrink-0 no-focus-ring"
+          style={{
+            height: 28,
+            width: 28,
+            border: "1px solid var(--border-subtle)",
+            color: "var(--fg-secondary)",
+            backgroundColor: "transparent",
+          }}
           title="Retour aux projets"
           aria-label="Retour"
         >
           <IconChevronLeft size={13} />
         </Link>
 
-        <div className="flex items-center gap-2.5 min-w-0">
+        <div className="flex items-center min-w-0" style={{ gap: 12 }}>
           <div
-            className="w-7 h-7 flex items-center justify-center text-[10px] font-black flex-shrink-0"
-            style={{ backgroundColor: accent, color: "#05080F" }}
-          >F1</div>
-          <div className="flex flex-col min-w-0">
-            <div className="text-[11px] font-semibold uppercase truncate" style={{ letterSpacing: "0.12em" }}>
+            className="flex items-center justify-center flex-shrink-0"
+            style={{
+              width: 28,
+              height: 28,
+              border: "1px solid var(--border-strong)",
+              color: "var(--fg-primary)",
+              fontSize: 10,
+              fontWeight: 600,
+              letterSpacing: "0.04em",
+            }}
+            aria-hidden
+          >
+            F1
+          </div>
+          <div className="flex flex-col min-w-0" style={{ lineHeight: 1.15 }}>
+            <div
+              className="truncate"
+              style={{
+                fontSize: 13,
+                fontWeight: 500,
+                letterSpacing: "-0.005em",
+                color: "var(--fg-primary)",
+              }}
+              title={projectName}
+            >
               {projectName}
             </div>
-            <div className="text-[9px] truncate" style={{ color: "var(--fg-muted)", letterSpacing: "0.06em" }}>
-              {String(pageIndex + 1).padStart(2, "0")} / {String(totalPages).padStart(2, "0")} · {pageName}
+            <div
+              className="truncate"
+              style={{
+                fontSize: 11,
+                color: "var(--fg-muted)",
+                marginTop: 2,
+              }}
+            >
+              <span style={{ fontFeatureSettings: "'tnum' 1", fontVariantNumeric: "tabular-nums" }}>
+                {String(pageIndex + 1).padStart(2, "0")} / {String(totalPages).padStart(2, "0")}
+              </span>
+              <span style={{ margin: "0 6px", color: "var(--border-strong)" }}>·</span>
+              <span>{pageName}</span>
             </div>
           </div>
         </div>
@@ -99,13 +138,13 @@ export default function TopBar({
       </div>
 
       {/* RIGHT — actions */}
-      <div className="flex items-center gap-1 flex-shrink-0">
-        {/* Undo/Redo */}
-        <div className="flex">
+      <div className="flex items-center flex-shrink-0" style={{ gap: 6 }}>
+        {/* Undo/Redo — paired group */}
+        <div className="flex" style={{ gap: 0 }}>
           <IconButton onClick={onUndo} disabled={!canUndo} title="Annuler (⌘Z)">
             <IconUndo size={12} />
           </IconButton>
-          <IconButton onClick={onRedo} disabled={!canRedo} title="Rétablir (⌘⇧Z)">
+          <IconButton onClick={onRedo} disabled={!canRedo} title="Rétablir (⌘⇧Z)" attached="left">
             <IconRedo size={12} />
           </IconButton>
         </div>
@@ -114,24 +153,30 @@ export default function TopBar({
 
         {/* Grid */}
         <ToggleButton active={showGrid} onClick={() => onToggleGrid(!showGrid)} accent={accent} title="Grille (G)">
-          <span style={{ fontSize: 9, letterSpacing: "0.08em" }}>GRID</span>
+          <span style={{ fontSize: 10, letterSpacing: "0.06em", fontWeight: 500 }}>Grille</span>
         </ToggleButton>
 
         <Sep />
 
-        {/* Sync status + Save */}
+        {/* Sync status */}
         <SyncIndicator status={syncStatus} accent={accent} />
 
+        {/* Save — neutre élevé, confirmation discrète */}
         <button
           onClick={onSave}
           title="Sauvegarder (⌘S)"
-          className="h-8 px-3 flex items-center gap-1.5 text-[10px] uppercase font-semibold transition-all"
+          className="flex items-center justify-center transition-colors"
           style={{
-            border: `1px solid ${syncStatus === "saved" ? `${accent}80` : "var(--border-subtle)"}`,
-            color: syncStatus === "saved" ? accent : "var(--fg-primary)",
-            backgroundColor: syncStatus === "saved" ? `${accent}12` : "var(--bg-elevated)",
-            letterSpacing: "0.08em",
-            minWidth: 92,
+            height: 28,
+            padding: "0 12px",
+            gap: 6,
+            border: "1px solid var(--border-subtle)",
+            color: syncStatus === "saved" ? "var(--fg-primary)" : "var(--fg-secondary)",
+            backgroundColor: "var(--bg-elevated)",
+            fontSize: 11,
+            fontWeight: 500,
+            letterSpacing: "-0.005em",
+            minWidth: 96,
           }}
         >
           {syncStatus === "saved"
@@ -140,16 +185,21 @@ export default function TopBar({
           }
         </button>
 
-        {/* Export */}
+        {/* Export — CTA primaire, l'unique aplat accent */}
         <button
           onClick={onExport}
           title="Exporter (⌘E)"
-          className="h-8 px-3 flex items-center gap-1.5 text-[10px] uppercase font-semibold transition-colors"
+          className="flex items-center justify-center transition-colors"
           style={{
-            border: `1px solid ${accent}80`,
-            color: accent,
-            backgroundColor: `${accent}12`,
-            letterSpacing: "0.08em",
+            height: 28,
+            padding: "0 14px",
+            gap: 6,
+            border: `1px solid ${accent}`,
+            color: "#05080F",
+            backgroundColor: accent,
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: "-0.005em",
           }}
         >
           <IconDownload size={12} /> Export
@@ -173,18 +223,21 @@ export default function TopBar({
 
 // ─── Atoms ─────────────────────────────────────────────────────────────────────
 
-function IconButton({ children, onClick, disabled, title }: { children: React.ReactNode; onClick?: () => void; disabled?: boolean; title?: string }) {
+function IconButton({ children, onClick, disabled, title, attached }: { children: React.ReactNode; onClick?: () => void; disabled?: boolean; title?: string; attached?: "left" }) {
   return (
     <button
       onClick={onClick}
       disabled={disabled}
       title={title}
       aria-label={title}
-      className="h-8 w-8 touch-target flex items-center justify-center transition-colors disabled:opacity-25"
+      className="touch-target flex items-center justify-center transition-colors disabled:opacity-25"
       style={{
+        height: 28,
+        width: 28,
         border: "1px solid var(--border-subtle)",
+        borderLeftWidth: attached === "left" ? 0 : 1,
         color: "var(--fg-secondary)",
-        backgroundColor: "var(--bg-elevated)",
+        backgroundColor: "transparent",
       }}
     >
       {children}
@@ -197,12 +250,14 @@ function ToggleButton({ active, onClick, accent, title, children }: { active: bo
     <button
       onClick={onClick}
       title={title}
-      className="h-8 px-2.5 flex items-center justify-center transition-colors uppercase"
+      className="flex items-center justify-center transition-colors"
       style={{
-        border: `1px solid ${active ? `${accent}50` : "var(--border-subtle)"}`,
-        color: active ? accent : "var(--fg-secondary)",
-        backgroundColor: active ? `${accent}10` : "var(--bg-elevated)",
-        fontWeight: 500,
+        height: 28,
+        padding: "0 10px",
+        border: "1px solid var(--border-subtle)",
+        color: active ? "var(--fg-primary)" : "var(--fg-secondary)",
+        backgroundColor: active ? "var(--bg-elevated)" : "transparent",
+        boxShadow: active ? `inset 0 -1px 0 ${accent}` : "none",
       }}
     >
       {children}
@@ -211,7 +266,7 @@ function ToggleButton({ active, onClick, accent, title, children }: { active: bo
 }
 
 function Sep() {
-  return <div className="w-px h-5 mx-1" style={{ backgroundColor: "var(--border-subtle)" }} />;
+  return <div style={{ width: 1, height: 18, margin: "0 4px", backgroundColor: "var(--border-subtle)" }} />;
 }
 
 function SyncIndicator({ status, accent }: { status: SyncStatus; accent: string }) {
@@ -220,21 +275,23 @@ function SyncIndicator({ status, accent }: { status: SyncStatus; accent: string 
   }
 
   const config = {
-    dirty:   { label: "Non sauvegardé",      dot: "var(--fg-muted)",  color: "var(--fg-secondary)" },
-    syncing: { label: "Synchronisation…",    dot: accent,             color: "var(--fg-secondary)" },
-    saved:   { label: "Sauvegardé",          dot: accent,             color: accent },
-    error:   { label: "Erreur de sync",      dot: "#FF5C7A",          color: "#FF5C7A" },
+    dirty:   { label: "Non sauvegardé",   dot: "var(--fg-muted)",     color: "var(--fg-muted)" },
+    syncing: { label: "Synchronisation",  dot: "var(--fg-secondary)", color: "var(--fg-secondary)" },
+    saved:   { label: "Sauvegardé",       dot: accent,                color: "var(--fg-secondary)" },
+    error:   { label: "Erreur de sync",   dot: "#E07070",             color: "#E07070" },
   }[status];
 
   return (
     <div
       role="status"
       aria-live="polite"
-      className="flex items-center gap-1.5 px-2 text-[10px] uppercase whitespace-nowrap"
+      className="flex items-center whitespace-nowrap"
       style={{
         height: 28,
+        gap: 8,
+        padding: "0 8px",
         color: config.color,
-        letterSpacing: "0.08em",
+        fontSize: 11,
         fontWeight: 500,
       }}
     >

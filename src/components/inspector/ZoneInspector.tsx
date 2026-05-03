@@ -38,7 +38,6 @@ export default function ZoneInspector({ theme, zoneKey }: ZoneInspectorProps) {
   } = useEditor();
   const accent = theme.colors.accent;
 
-  // Resolve zone identity
   const [sideRaw, ...rest] = zoneKey.split("-");
   const side: "left" | "right" = sideRaw === "right" ? "right" : "left";
   const zoneId = rest.join("-");
@@ -59,7 +58,6 @@ export default function ZoneInspector({ theme, zoneKey }: ZoneInspectorProps) {
   const box: BoxStyle = { ...DEFAULT_BOX_STYLE, ...(boxStyles[zoneKey] ?? {}) };
   const updateBox = (patch: Partial<BoxStyle>) => setBoxStyle(zoneKey, patch);
 
-  // Height stepper — clamps + redistributes among others (this side only)
   const setHeight = (newRatio: number) => {
     const clamped = Math.min(ZONE.MAX_RATIO, Math.max(ZONE.MIN_RATIO, newRatio));
     const delta = clamped - zone.heightRatio;
@@ -76,41 +74,44 @@ export default function ZoneInspector({ theme, zoneKey }: ZoneInspectorProps) {
   };
   const pct = Math.round(zone.heightRatio * 100);
 
+  const kindLabel = isHeader ? "En-tête" : isFooter ? "Pied de page" : "Section";
+  const sideLabel = side === "left" ? "Page gauche" : "Page droite";
+
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col" style={{ gap: 22 }}>
       {/* Header */}
       <div>
-        <div className="flex items-center gap-1.5">
-          <span className="text-[7px] font-mono uppercase" style={{ color: accent, letterSpacing: "0.18em" }}>
-            {isHeader ? "Header" : isFooter ? "Footer" : "Section"}
-          </span>
-          <span className="text-[7px] font-mono uppercase" style={{ color: "#555", letterSpacing: "0.18em" }}>·</span>
-          <span className="text-[7px] font-mono uppercase" style={{ color: "#888", letterSpacing: "0.18em" }}>
-            {side}
-          </span>
+        <div style={{ fontSize: 11, fontWeight: 500, color: "var(--fg-secondary)", letterSpacing: "-0.005em" }}>
+          {kindLabel} <span style={{ color: "var(--fg-muted)" }}>· {sideLabel}</span>
         </div>
-        <div className="text-[12px] font-bold mt-0.5" style={{ color: "#E0E0E8" }}>
+        <div style={{ fontSize: 14, fontWeight: 500, color: "var(--fg-primary)", marginTop: 4, letterSpacing: "-0.01em" }}>
           {zone.label}
         </div>
-        {/* Side switcher */}
         <button
           onClick={() => selectZone(`${otherSide}-${zoneId}`)}
-          className="mt-2 flex items-center gap-1 text-[8px] font-mono uppercase px-1.5 py-0.5"
-          style={{ border: "1px solid #2A2A3A", color: "#888", letterSpacing: "0.1em" }}
-          onMouseEnter={(e) => { e.currentTarget.style.color = accent; e.currentTarget.style.borderColor = accent; }}
-          onMouseLeave={(e) => { e.currentTarget.style.color = "#888"; e.currentTarget.style.borderColor = "#2A2A3A"; }}
+          className="flex items-center transition-colors"
+          style={{
+            marginTop: 8,
+            gap: 6,
+            padding: "4px 8px",
+            border: "1px solid var(--border-subtle)",
+            color: "var(--fg-secondary)",
+            backgroundColor: "transparent",
+            fontSize: 11,
+            fontWeight: 500,
+            letterSpacing: "-0.005em",
+          }}
           title={`Passer à la page ${otherSide === "left" ? "gauche" : "droite"}`}
         >
-          {side === "left" ? <IconChevronRight size={9} /> : <IconChevronLeft size={9} />}
-          page {otherSide === "left" ? "gauche" : "droite"}
+          {side === "left" ? <IconChevronRight size={10} /> : <IconChevronLeft size={10} />}
+          Page {otherSide === "left" ? "gauche" : "droite"}
         </button>
       </div>
 
-      {/* Visibility (header/footer only) */}
       {isHF && (
-        <Section label="Visibilité" theme={theme}>
+        <Section label="Visibilité">
           <Toggle
-            label={`${isHeader ? "Header" : "Footer"} visible`}
+            label={`${kindLabel} visible`}
             on={!(isHeader ? hideHeader : hideFooter)}
             accent={accent}
             onChange={(v) => (isHeader ? toggleHeaderVisibility(!v) : toggleFooterVisibility(!v))}
@@ -118,15 +119,9 @@ export default function ZoneInspector({ theme, zoneKey }: ZoneInspectorProps) {
         </Section>
       )}
 
-      {/* Height */}
-      <Section label="Hauteur" theme={theme}>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setHeight(zone.heightRatio - 0.01)}
-            className="w-7 h-7 flex items-center justify-center text-[12px] font-mono"
-            style={{ border: "1px solid #2A2A3A", color: "#888", backgroundColor: "#16161F" }}
-            title="−1%"
-          >−</button>
+      <Section label="Hauteur">
+        <div className="flex items-center" style={{ gap: 6 }}>
+          <Stepper sign="−" onClick={() => setHeight(zone.heightRatio - 0.01)} title="−1%" />
           <input
             type="number"
             min={Math.round(ZONE.MIN_RATIO * 100)}
@@ -136,16 +131,19 @@ export default function ZoneInspector({ theme, zoneKey }: ZoneInspectorProps) {
               const n = Number(e.target.value);
               if (Number.isFinite(n)) setHeight(n / 100);
             }}
-            className="flex-1 h-7 text-center font-mono text-[11px] outline-none"
-            style={{ background: "#16161F", border: "1px solid #2A2A3A", color: "#E5E5EE" }}
+            className="flex-1 text-center outline-none"
+            style={{
+              height: 28,
+              background: "var(--bg-elevated)",
+              border: "1px solid var(--border-subtle)",
+              color: "var(--fg-primary)",
+              fontFamily: "monospace",
+              fontSize: 12,
+              fontVariantNumeric: "tabular-nums",
+            }}
           />
-          <span className="text-[10px] font-mono" style={{ color: "#666" }}>%</span>
-          <button
-            onClick={() => setHeight(zone.heightRatio + 0.01)}
-            className="w-7 h-7 flex items-center justify-center text-[12px] font-mono"
-            style={{ border: "1px solid #2A2A3A", color: "#888", backgroundColor: "#16161F" }}
-            title="+1%"
-          >+</button>
+          <span style={{ fontSize: 11, color: "var(--fg-muted)", fontFamily: "monospace", paddingLeft: 2, paddingRight: 4 }}>%</span>
+          <Stepper sign="+" onClick={() => setHeight(zone.heightRatio + 0.01)} title="+1%" />
         </div>
         <input
           type="range"
@@ -153,19 +151,17 @@ export default function ZoneInspector({ theme, zoneKey }: ZoneInspectorProps) {
           max={Math.round(ZONE.MAX_RATIO * 100)}
           value={pct}
           onChange={(e) => setHeight(Number(e.target.value) / 100)}
-          style={{ width: "100%", accentColor: accent, marginTop: 4 }}
+          style={{ width: "100%", accentColor: accent, marginTop: 8 }}
         />
       </Section>
 
-      {/* Position (sections only) */}
       {!isHF && (
-        <Section label="Position" theme={theme}>
-          <div className="flex gap-1">
+        <Section label="Position">
+          <div className="flex" style={{ gap: 4 }}>
             <PosBtn
               onClick={() => reorderZones(side, zoneIdx, zoneIdx - 1)}
               disabled={zoneIdx <= 1}
               title="Monter"
-              accent={accent}
             >
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M12 19V5" />
@@ -177,7 +173,6 @@ export default function ZoneInspector({ theme, zoneKey }: ZoneInspectorProps) {
               onClick={() => reorderZones(side, zoneIdx, zoneIdx + 1)}
               disabled={zoneIdx >= lastIdx - 1}
               title="Descendre"
-              accent={accent}
             >
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d="M12 5v14" />
@@ -191,8 +186,18 @@ export default function ZoneInspector({ theme, zoneKey }: ZoneInspectorProps) {
               onClick={() => {
                 if (confirm(`Supprimer "${zone.label}" ?`)) removeZone(side, zoneId);
               }}
-              className="flex items-center justify-center gap-1.5 mt-1 py-1.5 text-[9px] font-mono uppercase transition-colors"
-              style={{ border: "1px solid #5A2A2A", color: "#E07070", backgroundColor: "#1A0F12", letterSpacing: "0.1em" }}
+              className="flex items-center justify-center transition-colors"
+              style={{
+                marginTop: 6,
+                height: 30,
+                gap: 6,
+                border: "1px solid var(--border-subtle)",
+                color: "#E07070",
+                backgroundColor: "transparent",
+                fontSize: 11,
+                fontWeight: 500,
+                letterSpacing: "-0.005em",
+              }}
             >
               <IconClose size={11} />
               Supprimer la section
@@ -201,10 +206,9 @@ export default function ZoneInspector({ theme, zoneKey }: ZoneInspectorProps) {
         </Section>
       )}
 
-      {/* Layout (sections only) */}
       {!isHF && (
-        <Section label="Layout" theme={theme}>
-          <div className="grid grid-cols-3 gap-1.5">
+        <Section label="Disposition">
+          <div className="grid grid-cols-3" style={{ gap: 4 }}>
             {ALL_LAYOUTS.map((l) => {
               const active = l.id === currentLayout;
               return (
@@ -212,19 +216,35 @@ export default function ZoneInspector({ theme, zoneKey }: ZoneInspectorProps) {
                   key={l.id}
                   onClick={() => setLayout(zoneKey, l.id)}
                   title={l.label}
-                  className="flex flex-col items-center justify-center gap-1 transition-colors"
+                  className="flex flex-col items-center justify-center transition-colors"
                   style={{
-                    padding: "5px 2px",
-                    minHeight: "46px",
-                    border: `1px solid ${active ? accent : "#2A2A3A"}`,
-                    backgroundColor: active ? `${accent}15` : "transparent",
+                    gap: 4,
+                    padding: "6px 2px",
+                    minHeight: 50,
+                    border: "1px solid var(--border-subtle)",
+                    backgroundColor: active ? "var(--bg-elevated)" : "transparent",
+                    boxShadow: active ? `inset 0 -1px 0 ${accent}` : "none",
                     cursor: "pointer",
                   }}
                 >
-                  <div style={{ fontSize: "8px", lineHeight: 1.2, fontFamily: "monospace", color: active ? accent : "#666", whiteSpace: "pre" }}>
+                  <div
+                    style={{
+                      fontSize: 9,
+                      lineHeight: 1.2,
+                      fontFamily: "monospace",
+                      color: active ? "var(--fg-primary)" : "var(--fg-muted)",
+                      whiteSpace: "pre",
+                    }}
+                  >
                     {l.ascii}
                   </div>
-                  <div style={{ fontSize: "5.5px", fontFamily: "monospace", color: active ? accent : "#555", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  <div
+                    style={{
+                      fontSize: 9,
+                      color: active ? "var(--fg-secondary)" : "var(--fg-muted)",
+                      letterSpacing: "-0.005em",
+                    }}
+                  >
                     {l.label}
                   </div>
                 </button>
@@ -234,74 +254,81 @@ export default function ZoneInspector({ theme, zoneKey }: ZoneInspectorProps) {
         </Section>
       )}
 
-      {/* Box Style */}
       <Section
-        label="Box Style"
-        theme={theme}
+        label="Boîte"
         action={
           <button
             onClick={() => resetBoxStyle(zoneKey)}
-            className="flex items-center gap-1 text-[7px] font-mono uppercase px-1.5 py-0.5"
-            style={{ border: "1px solid #333", color: "#777", letterSpacing: "0.1em" }}
-            title="Réinitialiser le box style"
+            className="flex items-center transition-colors"
+            style={{
+              gap: 4,
+              padding: "3px 8px",
+              border: "1px solid var(--border-subtle)",
+              color: "var(--fg-muted)",
+              backgroundColor: "transparent",
+              fontSize: 11,
+              fontWeight: 500,
+              letterSpacing: "-0.005em",
+            }}
+            title="Réinitialiser"
           >
-            <IconRefresh size={9} />
-            Reset
+            <IconRefresh size={10} />
+            Réinitialiser
           </button>
         }
       >
-        <SubSection label="Preset">
-          <div className="flex flex-wrap gap-1">
+        <SubSection label="Préréglage">
+          <div className="flex flex-wrap" style={{ gap: 4 }}>
             {BOX_STYLE_PRESETS.map((preset) => (
               <button
                 key={preset.id}
                 onClick={() => setBoxStyle(zoneKey, preset.style)}
                 title={preset.name}
-                className="flex flex-col items-center justify-center gap-0.5 transition-colors"
+                className="flex flex-col items-center justify-center transition-colors"
                 style={{
-                  width: 32, height: 30,
-                  border: "1px solid #2A2A3A",
+                  width: 36,
+                  height: 32,
+                  gap: 1,
+                  border: "1px solid var(--border-subtle)",
                   backgroundColor: "transparent",
-                  color: "#999",
+                  color: "var(--fg-secondary)",
                   cursor: "pointer",
-                  fontSize: 11,
+                  fontSize: 12,
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = accent;
-                  e.currentTarget.style.color = accent;
-                  e.currentTarget.style.backgroundColor = `${accent}12`;
+                  e.currentTarget.style.backgroundColor = "var(--bg-elevated)";
+                  e.currentTarget.style.color = "var(--fg-primary)";
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "#2A2A3A";
-                  e.currentTarget.style.color = "#999";
                   e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = "var(--fg-secondary)";
                 }}
               >
                 <span style={{ lineHeight: 1 }}>{preset.icon}</span>
-                <span style={{ fontSize: 5, fontFamily: "monospace", letterSpacing: "0.05em", textTransform: "uppercase" }}>{preset.name}</span>
+                <span style={{ fontSize: 8, letterSpacing: "-0.005em" }}>{preset.name}</span>
               </button>
             ))}
           </div>
         </SubSection>
-        <SubSection label="Border">
+        <SubSection label="Bordure">
           <ChipRow>
             {BORDER_STYLES.map((b) => (
               <Chip key={b} active={box.border === b} accent={accent} onClick={() => updateBox({ border: b })} title={b}>
-                {b === "none" ? "∅" : <div style={{ width: 14, height: 8, borderTop: `2px ${b} ${box.border === b ? accent : "#666"}` }} />}
+                {b === "none" ? <span style={{ fontSize: 10, color: "inherit" }}>∅</span> : <div style={{ width: 14, height: 8, borderTop: `2px ${b} currentColor` }} />}
               </Chip>
             ))}
           </ChipRow>
         </SubSection>
-        <SubSection label="Width">
+        <SubSection label="Épaisseur">
           <ChipRow>
             {BORDER_WIDTHS.map((w) => (
               <Chip key={w} active={box.borderWidth === w} accent={accent} onClick={() => updateBox({ borderWidth: w })} disabled={box.border === "none"}>
-                <span style={{ fontSize: 9, fontFamily: "monospace" }}>{w}</span>
+                <span style={{ fontSize: 10, fontFamily: "monospace" }}>{w}</span>
               </Chip>
             ))}
           </ChipRow>
         </SubSection>
-        <SubSection label="Sides">
+        <SubSection label="Côtés">
           <ChipRow>
             {BORDER_SIDES.map(({ v, g }) => (
               <Chip key={v} active={box.borderSides === v} accent={accent} onClick={() => updateBox({ borderSides: v })} disabled={box.border === "none"} title={v}>
@@ -310,7 +337,7 @@ export default function ZoneInspector({ theme, zoneKey }: ZoneInspectorProps) {
             ))}
           </ChipRow>
         </SubSection>
-        <SubSection label="Fill">
+        <SubSection label="Remplissage">
           <ChipRow>
             {FILL_STYLES.map((f) => (
               <Chip key={f} active={box.fill === f} accent={accent} onClick={() => updateBox({ fill: f })} title={f}>
@@ -319,29 +346,29 @@ export default function ZoneInspector({ theme, zoneKey }: ZoneInspectorProps) {
             ))}
           </ChipRow>
         </SubSection>
-        <SubSection label="Radius">
+        <SubSection label="Rayon">
           <ChipRow>
             {RADIUS_STYLES.map((r) => (
               <Chip key={r} active={box.radius === r} accent={accent} onClick={() => updateBox({ radius: r })} title={r}>
-                <div style={{ width: 14, height: 10, border: `1.5px solid ${box.radius === r ? accent : "#666"}`, borderRadius: r === "rounded" ? 6 : r === "soft" ? 2 : 0 }} />
+                <div style={{ width: 14, height: 10, border: "1.5px solid currentColor", borderRadius: r === "rounded" ? 6 : r === "soft" ? 2 : 0 }} />
               </Chip>
             ))}
           </ChipRow>
         </SubSection>
-        <SubSection label="Shadow">
+        <SubSection label="Ombre">
           <ChipRow>
             {SHADOW_STYLES.map((s) => (
               <Chip key={s} active={box.shadow === s} accent={accent} onClick={() => updateBox({ shadow: s })} title={s}>
-                <ShadowSwatch shadow={s} accent={box.shadow === s ? accent : "#666"} />
+                <ShadowSwatch shadow={s} accent={accent} active={box.shadow === s} />
               </Chip>
             ))}
           </ChipRow>
         </SubSection>
-        <SubSection label="Corners">
+        <SubSection label="Coins">
           <ChipRow>
             {CORNER_STYLES.map((c) => (
               <Chip key={c} active={box.corners === c} accent={accent} onClick={() => updateBox({ corners: c })} title={c}>
-                <span style={{ fontSize: 9, fontFamily: "monospace" }}>{c === "none" ? "∅" : c === "brackets" ? "⌐⌐" : "◢◣"}</span>
+                <span style={{ fontSize: 10, fontFamily: "monospace" }}>{c === "none" ? "∅" : c === "brackets" ? "⌐⌐" : "◢◣"}</span>
               </Chip>
             ))}
           </ChipRow>
@@ -353,11 +380,11 @@ export default function ZoneInspector({ theme, zoneKey }: ZoneInspectorProps) {
 
 // ── Primitives ───────────────────────────────────────────────────────────────
 
-function Section({ label, theme, action, children }: { label: string; theme: ArtDirection; action?: React.ReactNode; children: React.ReactNode }) {
+function Section({ label, action, children }: { label: string; action?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-2 pb-3 border-b" style={{ borderColor: "#1E1E2A" }}>
+    <div className="flex flex-col" style={{ gap: 10 }}>
       <div className="flex items-center justify-between">
-        <div className="text-[7px] font-mono uppercase" style={{ color: theme.colors.accent, letterSpacing: "0.18em" }}>
+        <div style={{ fontSize: 11, fontWeight: 500, color: "var(--fg-secondary)", letterSpacing: "-0.005em" }}>
           {label}
         </div>
         {action}
@@ -369,15 +396,15 @@ function Section({ label, theme, action, children }: { label: string; theme: Art
 
 function SubSection({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-1">
-      <div className="text-[6px] font-mono uppercase" style={{ color: "#555", letterSpacing: "0.18em" }}>{label}</div>
+    <div className="flex flex-col" style={{ gap: 6 }}>
+      <div style={{ fontSize: 11, color: "var(--fg-muted)", letterSpacing: "-0.005em" }}>{label}</div>
       {children}
     </div>
   );
 }
 
 function ChipRow({ children }: { children: React.ReactNode }) {
-  return <div className="flex flex-wrap gap-1">{children}</div>;
+  return <div className="flex flex-wrap" style={{ gap: 4 }}>{children}</div>;
 }
 
 function Chip({ active, accent, onClick, disabled = false, title, children }: {
@@ -390,10 +417,12 @@ function Chip({ active, accent, onClick, disabled = false, title, children }: {
       title={title}
       className="flex items-center justify-center transition-colors flex-shrink-0"
       style={{
-        width: 26, height: 24,
-        border: `1px solid ${active ? accent : "#2A2A3A"}`,
-        backgroundColor: active ? `${accent}15` : "transparent",
-        color: active ? accent : "#777",
+        width: 28,
+        height: 26,
+        border: "1px solid var(--border-subtle)",
+        backgroundColor: active ? "var(--bg-elevated)" : "transparent",
+        color: active ? "var(--fg-primary)" : "var(--fg-secondary)",
+        boxShadow: active ? `inset 0 -1px 0 ${accent}` : "none",
         cursor: disabled ? "not-allowed" : "pointer",
         opacity: disabled ? 0.35 : 1,
       }}
@@ -403,27 +432,50 @@ function Chip({ active, accent, onClick, disabled = false, title, children }: {
   );
 }
 
-function PosBtn({ onClick, disabled, title, accent, children }: {
-  onClick: () => void; disabled?: boolean; title: string; accent: string; children: React.ReactNode;
+function PosBtn({ onClick, disabled, title, children }: {
+  onClick: () => void; disabled?: boolean; title: string; children: React.ReactNode;
 }) {
   return (
     <button
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
       title={title}
-      className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-[9px] font-mono uppercase transition-colors"
+      className="flex-1 flex items-center justify-center transition-colors"
       style={{
-        border: "1px solid #2A2A3A",
-        backgroundColor: "#16161F",
-        color: disabled ? "#444" : "#C5C5D0",
+        height: 30,
+        gap: 6,
+        border: "1px solid var(--border-subtle)",
+        backgroundColor: "transparent",
+        color: disabled ? "var(--fg-deep)" : "var(--fg-secondary)",
         cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.4 : 1,
-        letterSpacing: "0.1em",
+        opacity: disabled ? 0.5 : 1,
+        fontSize: 11,
+        fontWeight: 500,
+        letterSpacing: "-0.005em",
       }}
-      onMouseEnter={(e) => { if (!disabled) { e.currentTarget.style.color = accent; e.currentTarget.style.borderColor = accent; } }}
-      onMouseLeave={(e) => { if (!disabled) { e.currentTarget.style.color = "#C5C5D0"; e.currentTarget.style.borderColor = "#2A2A3A"; } }}
     >
       {children}
+    </button>
+  );
+}
+
+function Stepper({ sign, onClick, title }: { sign: string; onClick: () => void; title?: string }) {
+  return (
+    <button
+      onClick={onClick}
+      title={title}
+      className="flex items-center justify-center transition-colors"
+      style={{
+        width: 28,
+        height: 28,
+        border: "1px solid var(--border-subtle)",
+        color: "var(--fg-secondary)",
+        backgroundColor: "transparent",
+        fontFamily: "monospace",
+        fontSize: 12,
+      }}
+    >
+      {sign}
     </button>
   );
 }
@@ -434,30 +486,33 @@ function Toggle({ label, on, accent, onChange }: {
   return (
     <button
       onClick={() => onChange(!on)}
-      className="flex items-center justify-between py-1.5 px-2 transition-colors"
+      className="flex items-center justify-between transition-colors"
       style={{
-        border: `1px solid ${on ? accent : "#2A2A3A"}`,
-        backgroundColor: on ? `${accent}15` : "#16161F",
+        padding: "8px 10px",
+        border: "1px solid var(--border-subtle)",
+        backgroundColor: on ? "var(--bg-elevated)" : "transparent",
+        color: on ? "var(--fg-primary)" : "var(--fg-secondary)",
+        boxShadow: on ? `inset 2px 0 0 ${accent}` : "none",
       }}
     >
-      <span className="text-[10px] font-mono uppercase" style={{ color: on ? accent : "#888", letterSpacing: "0.1em" }}>
-        {label}
-      </span>
+      <span style={{ fontSize: 12, letterSpacing: "-0.005em" }}>{label}</span>
       <span
+        aria-hidden
         className="relative inline-block"
         style={{
-          width: 26, height: 14,
-          backgroundColor: on ? accent : "#333",
-          borderRadius: 7,
+          width: 28,
+          height: 16,
+          backgroundColor: on ? accent : "var(--border-strong)",
           transition: "background-color 150ms",
         }}
       >
         <span
-          className="absolute top-0.5"
+          className="absolute"
           style={{
-            width: 10, height: 10,
-            backgroundColor: on ? "#000" : "#888",
-            borderRadius: 5,
+            top: 2,
+            width: 12,
+            height: 12,
+            backgroundColor: on ? "var(--bg-app)" : "var(--fg-muted)",
             left: on ? 14 : 2,
             transition: "left 150ms",
           }}
@@ -470,7 +525,18 @@ function Toggle({ label, on, accent, onChange }: {
 function FillSwatch({ fill, theme }: { fill: FillStyle; theme: ArtDirection }) {
   const accent = theme.colors.accent;
   if (fill === "transparent") {
-    return <div style={{ width: 14, height: 12, backgroundImage: "linear-gradient(45deg,#444 25%,transparent 25%),linear-gradient(-45deg,#444 25%,transparent 25%)", backgroundSize: "5px 5px", border: "1px solid #333" }} />;
+    return (
+      <div
+        style={{
+          width: 14,
+          height: 12,
+          backgroundImage:
+            "linear-gradient(45deg, var(--border-strong) 25%, transparent 25%), linear-gradient(-45deg, var(--border-strong) 25%, transparent 25%)",
+          backgroundSize: "5px 5px",
+          border: "1px solid var(--border-subtle)",
+        }}
+      />
+    );
   }
   const map: Record<FillStyle, React.CSSProperties> = {
     transparent: {},
@@ -480,11 +546,11 @@ function FillSwatch({ fill, theme }: { fill: FillStyle; theme: ArtDirection }) {
     gradient:   { backgroundImage: `linear-gradient(135deg,${accent}40,transparent)` },
     glass:      { backgroundColor: `${accent}10`, boxShadow: `inset 0 0 0 1px ${accent}40` },
   };
-  return <div style={{ width: 14, height: 12, border: "1px solid #333", ...map[fill] }} />;
+  return <div style={{ width: 14, height: 12, border: "1px solid var(--border-subtle)", ...map[fill] }} />;
 }
 
-function ShadowSwatch({ shadow, accent }: { shadow: ShadowStyle; accent: string }) {
-  if (shadow === "none") return <span style={{ fontSize: 9, fontFamily: "monospace" }}>∅</span>;
+function ShadowSwatch({ shadow, accent, active }: { shadow: ShadowStyle; accent: string; active: boolean }) {
+  if (shadow === "none") return <span style={{ fontSize: 10, fontFamily: "monospace" }}>∅</span>;
   const map: Record<ShadowStyle, React.CSSProperties> = {
     none:  {},
     soft:  { boxShadow: "0 2px 4px rgba(0,0,0,0.6)" },
@@ -492,5 +558,6 @@ function ShadowSwatch({ shadow, accent }: { shadow: ShadowStyle; accent: string 
     neon:  { boxShadow: `0 0 6px ${accent}` },
     inset: { boxShadow: `inset 0 0 4px ${accent}` },
   };
-  return <div style={{ width: 12, height: 9, border: `1px solid ${accent}`, backgroundColor: shadow === "inset" ? "transparent" : `${accent}15`, ...map[shadow] }} />;
+  const stroke = active ? accent : "var(--border-strong)";
+  return <div style={{ width: 12, height: 9, border: `1px solid ${stroke}`, backgroundColor: shadow === "inset" ? "transparent" : `${accent}15`, ...map[shadow] }} />;
 }

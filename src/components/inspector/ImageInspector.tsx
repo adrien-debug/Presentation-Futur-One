@@ -21,18 +21,29 @@ export default function ImageInspector({ theme, slotId }: { theme: ArtDirection;
   };
 
   const inputStyle: React.CSSProperties = {
-    width: "100%", background: "#16161F", border: "1px solid #2A2A3A",
-    color: "#E5E5EE", padding: "5px 7px", fontSize: 11, fontFamily: "monospace", outline: "none", boxSizing: "border-box",
+    width: "100%",
+    background: "var(--bg-elevated)",
+    border: "1px solid var(--border-subtle)",
+    color: "var(--fg-primary)",
+    padding: "7px 10px",
+    fontSize: 11,
+    fontFamily: "monospace",
+    outline: "none",
+    boxSizing: "border-box",
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col" style={{ gap: 22 }}>
       <div>
-        <div className="text-[7px] font-mono uppercase tracking-widest" style={{ color: accent, letterSpacing: "0.15em" }}>IMAGE</div>
-        <div className="text-[9px] font-mono mt-0.5" style={{ color: "#666" }}>{slotId}</div>
+        <div style={{ fontSize: 11, fontWeight: 500, color: "var(--fg-secondary)", letterSpacing: "-0.005em" }}>
+          Image
+        </div>
+        <div style={{ fontSize: 11, color: "var(--fg-muted)", marginTop: 3, fontFamily: "monospace" }}>
+          {slotId}
+        </div>
       </div>
 
-      <Section label="Source" theme={theme}>
+      <Section label="Source">
         <input
           ref={fileInputRef}
           type="file"
@@ -42,15 +53,24 @@ export default function ImageInspector({ theme, slotId }: { theme: ArtDirection;
         />
         <button
           onClick={() => fileInputRef.current?.click()}
-          className="flex items-center justify-center gap-2 text-[10px] font-mono uppercase py-1.5 transition-colors"
-          style={{ border: "1px solid #2A2A3A", backgroundColor: "#16161F", color: "#C5C5D0", letterSpacing: "0.1em" }}
+          className="flex items-center justify-center transition-colors"
+          style={{
+            height: 32,
+            gap: 8,
+            border: "1px solid var(--border-subtle)",
+            backgroundColor: "transparent",
+            color: "var(--fg-secondary)",
+            fontSize: 11,
+            fontWeight: 500,
+            letterSpacing: "-0.005em",
+          }}
         >
           <IconUpload size={11} />
-          Upload fichier
+          Importer un fichier
         </button>
         <input
           type="text"
-          placeholder="https://..."
+          placeholder="https://…"
           value={urlInput}
           onChange={(e) => setUrlInput(e.target.value)}
           onBlur={() => urlInput.trim() && setImage(slotId, { src: urlInput.trim() })}
@@ -58,18 +78,29 @@ export default function ImageInspector({ theme, slotId }: { theme: ArtDirection;
           style={inputStyle}
         />
         {current.src && (
-          <button onClick={() => { removeImage(slotId); setUrlInput(""); }}
-            className="flex items-center justify-center gap-2 text-[10px] font-mono uppercase py-1.5"
-            style={{ border: "1px solid #5A2A2A", backgroundColor: "#16161F", color: "#E07070", letterSpacing: "0.1em" }}>
+          <button
+            onClick={() => { removeImage(slotId); setUrlInput(""); }}
+            className="flex items-center justify-center transition-colors"
+            style={{
+              height: 32,
+              gap: 8,
+              border: "1px solid var(--border-subtle)",
+              backgroundColor: "transparent",
+              color: "#E07070",
+              fontSize: 11,
+              fontWeight: 500,
+              letterSpacing: "-0.005em",
+            }}
+          >
             <IconTrash size={11} />
             Supprimer l&apos;image
           </button>
         )}
       </Section>
 
-      <Section label={`Filtre (${IMAGE_TREATMENTS.length})`} theme={theme}>
-        <div className="grid grid-cols-3 gap-1">
-          <FilterChip active={current.filter === "none"} accent={accent} onClick={() => setImage(slotId, { filter: "none" })} label="NONE" css="" />
+      <Section label={`Filtre · ${IMAGE_TREATMENTS.length}`}>
+        <div className="grid grid-cols-3" style={{ gap: 4 }}>
+          <FilterChip active={current.filter === "none"} accent={accent} onClick={() => setImage(slotId, { filter: "none" })} label="Aucun" css="" />
           {IMAGE_TREATMENTS.map((t) => (
             <FilterChip
               key={t.name}
@@ -83,24 +114,32 @@ export default function ImageInspector({ theme, slotId }: { theme: ArtDirection;
         </div>
       </Section>
 
-      <Section label="Fit" theme={theme}>
-        <div className="grid grid-cols-3 gap-1">
+      <Section label="Cadrage">
+        <div className="grid grid-cols-3" style={{ gap: 4 }}>
           {(["cover", "contain", "fill"] as ImageFit[]).map((f) => (
             <button
               key={f}
               onClick={() => setImage(slotId, { fit: f })}
-              className="text-[10px] font-mono uppercase py-1"
+              className="transition-colors"
               style={{
-                border: `1px solid ${current.fit === f ? accent : "#2A2A3A"}`,
-                backgroundColor: current.fit === f ? `${accent}22` : "#16161F",
-                color: current.fit === f ? accent : "#C5C5D0",
+                height: 30,
+                border: "1px solid var(--border-subtle)",
+                backgroundColor: current.fit === f ? "var(--bg-elevated)" : "transparent",
+                color: current.fit === f ? "var(--fg-primary)" : "var(--fg-secondary)",
+                boxShadow: current.fit === f ? `inset 0 -1px 0 ${accent}` : "none",
+                fontSize: 11,
+                fontWeight: 500,
+                letterSpacing: "-0.005em",
+                textTransform: "capitalize",
               }}
-            >{f}</button>
+            >
+              {f}
+            </button>
           ))}
         </div>
       </Section>
 
-      <Section label={`Opacité · ${Math.round(current.opacity * 100)}%`} theme={theme}>
+      <Section label={`Opacité · ${Math.round(current.opacity * 100)}%`}>
         <input
           type="range" min={0} max={100} value={Math.round(current.opacity * 100)}
           onChange={(e) => setImage(slotId, { opacity: Number(e.target.value) / 100 })}
@@ -108,24 +147,36 @@ export default function ImageInspector({ theme, slotId }: { theme: ArtDirection;
         />
       </Section>
 
-      <Section label="Overlay" theme={theme}>
-        <div className="flex gap-2 items-center">
+      <Section label="Surimpression">
+        <div className="flex items-center" style={{ gap: 8 }}>
           <input
             type="color"
             value={current.overlay && current.overlay !== "none" ? current.overlay : "#000000"}
             onChange={(e) => setImage(slotId, { overlay: e.target.value })}
-            style={{ width: 36, height: 28, background: "#16161F", border: "1px solid #2A2A3A", cursor: "pointer", padding: 2 }}
+            style={{
+              width: 36,
+              height: 30,
+              background: "var(--bg-elevated)",
+              border: "1px solid var(--border-subtle)",
+              cursor: "pointer",
+              padding: 2,
+            }}
           />
           <button
             onClick={() => setImage(slotId, { overlay: current.overlay === "none" ? "#000000" : "none" })}
-            className="flex-1 text-[10px] font-mono uppercase py-1"
+            className="flex-1 transition-colors"
             style={{
-              border: `1px solid ${current.overlay !== "none" ? accent : "#2A2A3A"}`,
-              backgroundColor: current.overlay !== "none" ? `${accent}22` : "#16161F",
-              color: current.overlay !== "none" ? accent : "#C5C5D0",
+              height: 30,
+              border: "1px solid var(--border-subtle)",
+              backgroundColor: current.overlay !== "none" ? "var(--bg-elevated)" : "transparent",
+              color: current.overlay !== "none" ? "var(--fg-primary)" : "var(--fg-secondary)",
+              boxShadow: current.overlay !== "none" ? `inset 0 -1px 0 ${accent}` : "none",
+              fontSize: 11,
+              fontWeight: 500,
+              letterSpacing: "-0.005em",
             }}
           >
-            {current.overlay === "none" ? "Off" : "On — clic pour off"}
+            {current.overlay === "none" ? "Désactivée" : "Active — clic pour désactiver"}
           </button>
         </div>
       </Section>
@@ -133,10 +184,12 @@ export default function ImageInspector({ theme, slotId }: { theme: ArtDirection;
   );
 }
 
-function Section({ label, theme, children }: { label: string; theme: ArtDirection; children: React.ReactNode }) {
+function Section({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-1.5 pb-3 border-b" style={{ borderColor: "#1E1E2A" }}>
-      <div className="text-[7px] font-mono uppercase tracking-widest" style={{ color: theme.colors.accent, letterSpacing: "0.15em" }}>{label}</div>
+    <div className="flex flex-col" style={{ gap: 8 }}>
+      <div style={{ fontSize: 11, fontWeight: 500, color: "var(--fg-secondary)", letterSpacing: "-0.005em" }}>
+        {label}
+      </div>
       {children}
     </div>
   );
@@ -147,17 +200,34 @@ function FilterChip({ active, accent, onClick, label, css }: { active: boolean; 
     <button
       onClick={onClick}
       className="relative overflow-hidden cursor-pointer"
-      style={{ border: `1px solid ${active ? accent : "#2A2A3A"}`, padding: 0, aspectRatio: "1.4/1" }}
+      style={{
+        border: "1px solid var(--border-subtle)",
+        padding: 0,
+        aspectRatio: "1.4/1",
+        boxShadow: active ? `inset 0 -2px 0 ${accent}` : "none",
+      }}
       title={label}
     >
       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(135deg, #5C7CC8 0%, #C89B5C 50%, #2C2C3C 100%)", filter: css || undefined }} />
-      <div style={{
-        position: "absolute", bottom: 0, left: 0, right: 0,
-        background: "rgba(0,0,0,0.7)", color: active ? accent : "#E5E5EE",
-        fontFamily: "monospace", fontSize: 6, textAlign: "center", padding: "2px 1px",
-        textTransform: "uppercase", letterSpacing: "0.05em",
-        whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
-      }}>{label}</div>
+      <div
+        style={{
+          position: "absolute",
+          bottom: 0,
+          left: 0,
+          right: 0,
+          background: "rgba(5, 8, 15, 0.78)",
+          color: active ? "var(--fg-primary)" : "var(--fg-secondary)",
+          fontSize: 9,
+          textAlign: "center",
+          padding: "2px 3px",
+          letterSpacing: "-0.005em",
+          whiteSpace: "nowrap",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+        }}
+      >
+        {label}
+      </div>
     </button>
   );
 }

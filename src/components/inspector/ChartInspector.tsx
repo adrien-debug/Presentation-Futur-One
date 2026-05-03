@@ -6,10 +6,13 @@ import { useEditor } from "@/contexts/EditorContext";
 import { ChartType, ChartConfig, DEFAULT_CHART_CONFIG } from "@/data/types";
 
 const TYPES: { id: ChartType; label: string }[] = [
-  { id: "bar", label: "Bar" }, { id: "line", label: "Line" },
-  { id: "area", label: "Area" }, { id: "donut", label: "Donut" },
-  { id: "gauge", label: "Gauge" }, { id: "radar", label: "Radar" },
-  { id: "horizontal-bar", label: "H-Bar" },
+  { id: "bar", label: "Barres" },
+  { id: "line", label: "Ligne" },
+  { id: "area", label: "Aire" },
+  { id: "donut", label: "Donut" },
+  { id: "gauge", label: "Jauge" },
+  { id: "radar", label: "Radar" },
+  { id: "horizontal-bar", label: "H-Barres" },
 ];
 
 export default function ChartInspector({ theme, slotId }: { theme: ArtDirection; slotId: string }) {
@@ -28,82 +31,145 @@ export default function ChartInspector({ theme, slotId }: { theme: ArtDirection;
     setChartConfig(slotId, { labels, values });
   };
   const addRow = () => {
-    setChartConfig(slotId, { labels: [...cfg.labels, `Item ${cfg.labels.length + 1}`], values: [...cfg.values, 0] });
+    setChartConfig(slotId, { labels: [...cfg.labels, `Élément ${cfg.labels.length + 1}`], values: [...cfg.values, 0] });
   };
   const removeRow = (idx: number) => {
     setChartConfig(slotId, { labels: cfg.labels.filter((_, i) => i !== idx), values: cfg.values.filter((_, i) => i !== idx) });
   };
   const reset = () => setChartConfig(slotId, { ...DEFAULT_CHART_CONFIG, type: cfg.type });
 
+  const inputStyle: React.CSSProperties = {
+    background: "var(--bg-elevated)",
+    border: "1px solid var(--border-subtle)",
+    color: "var(--fg-primary)",
+    outline: "none",
+    padding: "5px 8px",
+    fontSize: 11,
+    fontFamily: "monospace",
+  };
+
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col" style={{ gap: 22 }}>
       <div>
-        <div className="text-[7px] font-mono uppercase tracking-widest" style={{ color: accent, letterSpacing: "0.15em" }}>CHART</div>
-        <div className="text-[9px] font-mono mt-0.5" style={{ color: "#666" }}>{slotId}</div>
+        <div style={{ fontSize: 11, fontWeight: 500, color: "var(--fg-secondary)", letterSpacing: "-0.005em" }}>
+          Graphique
+        </div>
+        <div style={{ fontSize: 11, color: "var(--fg-muted)", marginTop: 3, fontFamily: "monospace" }}>
+          {slotId}
+        </div>
       </div>
 
-      <Section label="Type" theme={theme}>
-        <div className="grid grid-cols-4 gap-1">
-          {TYPES.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setChartConfig(slotId, { type: t.id })}
-              className="text-[8px] font-mono uppercase py-1.5"
-              style={{
-                border: `1px solid ${cfg.type === t.id ? accent : "#2A2A3A"}`,
-                backgroundColor: cfg.type === t.id ? `${accent}22` : "#16161F",
-                color: cfg.type === t.id ? accent : "#C5C5D0",
-              }}
-            >{t.label}</button>
-          ))}
+      <Section label="Type">
+        <div className="grid grid-cols-4" style={{ gap: 4 }}>
+          {TYPES.map((t) => {
+            const active = cfg.type === t.id;
+            return (
+              <button
+                key={t.id}
+                onClick={() => setChartConfig(slotId, { type: t.id })}
+                className="transition-colors"
+                style={{
+                  height: 28,
+                  border: "1px solid var(--border-subtle)",
+                  backgroundColor: active ? "var(--bg-elevated)" : "transparent",
+                  color: active ? "var(--fg-primary)" : "var(--fg-secondary)",
+                  boxShadow: active ? `inset 0 -1px 0 ${accent}` : "none",
+                  fontSize: 11,
+                  fontWeight: 500,
+                  letterSpacing: "-0.005em",
+                }}
+              >
+                {t.label}
+              </button>
+            );
+          })}
         </div>
       </Section>
 
-      <Section label="Données" theme={theme} action={
-        <button onClick={reset} className="text-[7px] font-mono uppercase px-1.5 py-0.5" style={{ border: "1px solid #333", color: "#777" }}>Reset</button>
-      }>
-        <div className="flex flex-col gap-1 max-h-[280px] overflow-y-auto">
+      <Section
+        label="Données"
+        action={
+          <button
+            onClick={reset}
+            className="transition-colors"
+            style={{
+              padding: "3px 8px",
+              border: "1px solid var(--border-subtle)",
+              color: "var(--fg-muted)",
+              backgroundColor: "transparent",
+              fontSize: 11,
+              fontWeight: 500,
+              letterSpacing: "-0.005em",
+            }}
+          >
+            Réinitialiser
+          </button>
+        }
+      >
+        <div className="flex flex-col" style={{ gap: 4, maxHeight: 280, overflowY: "auto" }}>
           {cfg.labels.map((lbl, i) => (
-            <div key={i} className="flex gap-1 items-center">
+            <div key={i} className="flex items-center" style={{ gap: 4 }}>
               <input
                 type="text"
                 value={lbl}
                 onChange={(e) => updateRow(i, e.target.value, cfg.values[i])}
-                placeholder="Label"
-                className="flex-1 text-[10px] font-mono px-1.5 py-1"
-                style={{ background: "#16161F", border: "1px solid #2A2A3A", color: "#E5E5EE", outline: "none" }}
+                placeholder="Étiquette"
+                className="flex-1"
+                style={inputStyle}
               />
               <input
                 type="number"
                 value={cfg.values[i] ?? 0}
                 onChange={(e) => updateRow(i, lbl, Number(e.target.value))}
-                className="w-14 text-[10px] font-mono px-1.5 py-1"
-                style={{ background: "#16161F", border: "1px solid #2A2A3A", color: "#E5E5EE", outline: "none" }}
+                style={{ ...inputStyle, width: 64 }}
               />
               <button
                 onClick={() => removeRow(i)}
                 disabled={cfg.labels.length <= 1}
-                className="w-5 h-5 flex items-center justify-center text-[10px] font-mono"
-                style={{ border: "1px solid #333", color: "#888", backgroundColor: "transparent" }}
-              >×</button>
+                className="flex items-center justify-center transition-colors"
+                style={{
+                  width: 24,
+                  height: 24,
+                  border: "1px solid var(--border-subtle)",
+                  color: "var(--fg-muted)",
+                  backgroundColor: "transparent",
+                  fontSize: 12,
+                }}
+                title="Supprimer la ligne"
+              >
+                ×
+              </button>
             </div>
           ))}
         </div>
         <button
           onClick={addRow}
-          className="text-[8px] font-mono uppercase py-1 mt-1"
-          style={{ border: `1px solid ${accent}40`, color: accent, backgroundColor: `${accent}10` }}
-        >+ Ajouter une ligne</button>
+          className="transition-colors"
+          style={{
+            marginTop: 6,
+            height: 28,
+            border: "1px solid var(--border-subtle)",
+            color: "var(--fg-secondary)",
+            backgroundColor: "transparent",
+            fontSize: 11,
+            fontWeight: 500,
+            letterSpacing: "-0.005em",
+          }}
+        >
+          + Ajouter une ligne
+        </button>
       </Section>
     </div>
   );
 }
 
-function Section({ label, theme, action, children }: { label: string; theme: ArtDirection; action?: React.ReactNode; children: React.ReactNode }) {
+function Section({ label, action, children }: { label: string; action?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="flex flex-col gap-1.5 pb-3 border-b" style={{ borderColor: "#1E1E2A" }}>
+    <div className="flex flex-col" style={{ gap: 8 }}>
       <div className="flex items-center justify-between">
-        <div className="text-[7px] font-mono uppercase tracking-widest" style={{ color: theme.colors.accent, letterSpacing: "0.15em" }}>{label}</div>
+        <div style={{ fontSize: 11, fontWeight: 500, color: "var(--fg-secondary)", letterSpacing: "-0.005em" }}>
+          {label}
+        </div>
         {action}
       </div>
       {children}

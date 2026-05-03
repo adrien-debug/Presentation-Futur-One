@@ -26,7 +26,7 @@ export default function PageContext({
   overrides = {},
 }: PageContextProps) {
   const isLeft = side === "left";
-  const { boxStyles, hideHeader, hideFooter } = useEditor();
+  const { boxStyles, hideHeader, hideFooter, projectName, spreadIndex, totalSpreads } = useEditor();
 
   // Filter hidden zones; renormalize heightRatios so visible zones fill 100%
   const visibleZones = zones.filter((z) =>
@@ -60,9 +60,24 @@ export default function PageContext({
 
           let content: React.ReactNode;
           if (zone.id === "header") {
-            content = override || <Header theme={theme} side={side} showGrid={showGrid} />;
+            content = override || (
+              <Header
+                theme={theme}
+                side={side}
+                showGrid={showGrid}
+                projectName={projectName || undefined}
+              />
+            );
           } else if (zone.id === "footer") {
-            content = override || <Footer theme={theme} side={side} showGrid={showGrid} />;
+            content = override || (
+              <Footer
+                theme={theme}
+                side={side}
+                showGrid={showGrid}
+                spreadIndex={spreadIndex}
+                totalSpreads={totalSpreads}
+              />
+            );
           } else {
             content = override || (
               <SectionBlock

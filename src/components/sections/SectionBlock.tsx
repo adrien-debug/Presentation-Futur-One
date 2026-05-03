@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useCallback } from "react";
 import { ArtDirection } from "@/design-system";
-import { F } from "@/utils/cqb";
+import { F, P, G } from "@/utils/cqb";
 import { LayoutContent, LayoutType, ContentDragKind } from "@/data/types";
 import { LAYOUT_DEFAULTS, DEFAULT_CONTENT } from "@/data/defaultContent";
 import { useEditor } from "@/contexts/EditorContext";
@@ -104,7 +104,6 @@ export default function SectionBlock({ theme, zoneId, label, side, showGrid = fa
       onDrop={onDrop}
       className="relative w-full h-full overflow-hidden group/zone cursor-pointer"
       style={{
-        borderBottom: `1px solid ${theme.colors.border}20`,
         outline: isSelected ? `2px solid ${accent}` : dragOver ? `2px dashed ${accent}` : "none",
         outlineOffset: -2,
       }}
@@ -214,11 +213,11 @@ function ETText({ field, value, onUpdate, zoneKey, ...props }: {
 
 function HeroLayout({ theme, content, onUpdate, accentColor, zoneKey }: LP) {
   return (
-    <div className="w-full h-full flex items-center" style={{ padding: "5cqb 8cqb" }}>
+    <div className="w-full h-full flex items-center" style={{ padding: P.zoneWide }}>
       <div>
         <ETText field="eyebrow" value={content.eyebrow ?? ""} onUpdate={onUpdate} zoneKey={zoneKey} tag="div" accentColor={accentColor}
-          style={{ fontFamily: "monospace", fontSize: F.xs, color: accentColor, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: "2cqb" }} />
-        <div style={{ fontFamily: theme.typography.headingFont, fontSize: F.display, letterSpacing: "-0.02em", lineHeight: "0.92", marginBottom: "3cqb" }}>
+          style={{ fontFamily: "monospace", fontSize: F.xs, color: accentColor, letterSpacing: "0.2em", textTransform: "uppercase", marginBottom: G.md }} />
+        <div style={{ fontFamily: theme.typography.headingFont, fontSize: F.display, letterSpacing: "-0.02em", lineHeight: "0.92", marginBottom: G.lg }}>
           <ETText field="heroTitle" value={content.heroTitle ?? ""} onUpdate={onUpdate} zoneKey={zoneKey} tag="div" accentColor={accentColor}
             style={{ fontWeight: 900, color: theme.colors.text }} />
           <ETText field="heroAccent" value={content.heroAccent ?? ""} onUpdate={onUpdate} zoneKey={zoneKey} tag="div" accentColor={accentColor}
@@ -247,7 +246,7 @@ function ImageTextLayout({ theme, content, onUpdate, accentColor, side, zoneId, 
       <div className="col-span-2 h-full">
         <ImagePlaceholder theme={theme} slotId={slotId} label={content.imageLabel ?? "Image"} zoneKey={zoneKey} />
       </div>
-      <div className="col-span-3 flex flex-col justify-center" style={{ padding: "5cqb 6cqb", gap: "2cqb" }}>
+      <div className="col-span-3 flex flex-col justify-center" style={{ padding: P.zone, gap: G.md }}>
         <ETText field="imageEyebrow" value={content.imageEyebrow ?? ""} onUpdate={onUpdate} zoneKey={zoneKey} tag="div" accentColor={accentColor}
           style={{ fontFamily: "monospace", fontSize: F.xs, color: accentColor, textTransform: "uppercase", letterSpacing: "0.1em" }} />
         <ETText field="imageBodyText" value={content.imageBodyText ?? ""} onUpdate={onUpdate} zoneKey={zoneKey} tag="div" accentColor={accentColor} multiline richText
@@ -262,16 +261,16 @@ function TwoColLayout({ theme, content }: LP) {
   const right = content.twoCol?.right ?? {};
   return (
     <div className="w-full h-full grid grid-cols-2 divide-x" style={{ borderColor: theme.colors.border }}>
-      <div className="flex flex-col justify-center" style={{ padding: "5cqb 6cqb", gap: "2cqb" }}>
+      <div className="flex flex-col justify-center" style={{ padding: P.zone, gap: G.md }}>
         <div className="font-mono uppercase" style={{ fontSize: F.xs, color: theme.colors.accent }}>{left.label}</div>
         <TextBlock theme={theme} size="small" text={left.text ?? ""} />
       </div>
-      <div className="flex flex-col justify-center" style={{ padding: "5cqb 6cqb", gap: "2cqb" }}>
+      <div className="flex flex-col justify-center" style={{ padding: P.zone, gap: G.md }}>
         <div className="font-mono uppercase" style={{ fontSize: F.xs, color: theme.colors.accent }}>{right.label}</div>
-        <div className="flex flex-col" style={{ gap: "1.5cqb" }}>
+        <div className="flex flex-col" style={{ gap: G.sm }}>
           {(right.items ?? []).map((item) => (
-            <div key={item} className="flex items-center" style={{ gap: "2cqb" }}>
-              <div style={{ width: "1cqb", height: "1cqb", borderRadius: "50%", backgroundColor: theme.colors.accent, flexShrink: 0 }} />
+            <div key={item} className="flex items-center" style={{ gap: G.md }}>
+              <div style={{ width: G.xs, height: G.xs, borderRadius: "50%", backgroundColor: theme.colors.accent, flexShrink: 0 }} />
               <span style={{ fontSize: F.small, color: theme.colors.textMuted }}>{item}</span>
             </div>
           ))}
@@ -284,13 +283,13 @@ function TwoColLayout({ theme, content }: LP) {
 function ChartLayout({ theme, content, onUpdate, accentColor, side, zoneId, zoneKey }: LP) {
   const slotId = `${side}-${zoneId}-chart-main`;
   return (
-    <div className="w-full h-full flex items-center" style={{ padding: "5cqb 6cqb", gap: "4cqb" }}>
+    <div className="w-full h-full flex items-center" style={{ padding: P.zone, gap: G.xl }}>
       <div className="flex-1 h-full">
         <ChartPlaceholder theme={theme} slotId={slotId} type={content.chartType ?? "bar"} label={content.chartLabel ?? ""} zoneKey={zoneKey} />
       </div>
       <div style={{ width: "30%", flexShrink: 0 }}>
         <ETText field="chartStatLabel" value={content.chartStatLabel ?? ""} onUpdate={onUpdate} zoneKey={zoneKey} tag="div" accentColor={accentColor}
-          style={{ fontFamily: "monospace", fontSize: F.xs, color: accentColor, textTransform: "uppercase", marginBottom: "1cqb" }} />
+          style={{ fontFamily: "monospace", fontSize: F.xs, color: accentColor, textTransform: "uppercase", marginBottom: G.xs }} />
         <ETText field="chartStatValue" value={content.chartStatValue ?? ""} onUpdate={onUpdate} zoneKey={zoneKey} tag="div" accentColor={accentColor}
           style={{ fontWeight: 900, fontSize: F.title, color: theme.colors.text, fontFamily: theme.typography.headingFont, letterSpacing: "-0.02em" }} />
         <ETText field="chartStatSub" value={content.chartStatSub ?? ""} onUpdate={onUpdate} zoneKey={zoneKey} tag="div" accentColor={accentColor}
@@ -303,33 +302,47 @@ function ChartLayout({ theme, content, onUpdate, accentColor, side, zoneId, zone
 function TextFullLayout({ theme, content, onUpdate, accentColor, zoneKey }: LP) {
   const tags = content.tags ?? [];
   return (
-    <div className="w-full h-full flex flex-col justify-center" style={{ padding: "5cqb 8cqb", gap: "2cqb" }}>
+    <div className="w-full h-full flex flex-col justify-center" style={{ padding: P.zoneWide, gap: G.md }}>
       <ETText field="textEyebrow" value={content.textEyebrow ?? ""} onUpdate={onUpdate} zoneKey={zoneKey} tag="div" accentColor={accentColor}
         style={{ fontFamily: "monospace", fontSize: F.xs, color: accentColor, textTransform: "uppercase", letterSpacing: "0.1em" }} />
       <ETText field="bodyText" value={content.bodyText ?? ""} onUpdate={onUpdate} zoneKey={zoneKey} tag="div" accentColor={accentColor} multiline richText
         style={{ fontSize: F.body, color: theme.colors.text, lineHeight: "1.5" }} />
-      <div className="flex" style={{ gap: "2cqb", marginTop: "1cqb" }}>
-        {tags.map((tag) => (
-          <div key={tag} className="font-mono uppercase tracking-wider"
-            style={{ padding: "1cqb 2cqb", fontSize: F.micro, border: `1px solid ${theme.colors.border}`, color: theme.colors.textMuted }}>
-            {tag}
-          </div>
-        ))}
-      </div>
+      {tags.length > 0 && (
+        <div className="flex" style={{ gap: G.md, marginTop: G.xs }}>
+          {tags.map((tag) => (
+            <div key={tag} className="font-mono uppercase tracking-wider"
+              style={{
+                padding: `${G.xs} ${G.md}`,
+                fontSize: F.micro,
+                border: `1px solid ${theme.colors.accent}40`,
+                color: theme.colors.text,
+                backgroundColor: `${theme.colors.accent}08`,
+              }}>
+              {tag}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 function ImageFullLayout({ theme, content, onUpdate, accentColor, side, zoneId, zoneKey }: LP) {
   const slotId = `${side}-${zoneId}-image-main`;
+  const hasCaption = !!(content.imageCaption ?? "").trim();
   return (
     <div className="w-full h-full relative">
       <ImagePlaceholder theme={theme} slotId={slotId} label={content.imageLabel ?? ""} fullBleed zoneKey={zoneKey} />
-      <div className="absolute bottom-0 left-0 right-0"
-        style={{ padding: "6cqb 6cqb 3cqb", background: `linear-gradient(transparent, ${theme.colors.background}CC)` }}>
-        <ETText field="imageCaption" value={content.imageCaption ?? ""} onUpdate={onUpdate} zoneKey={zoneKey} tag="div" accentColor={accentColor}
-          style={{ fontFamily: "monospace", fontSize: F.xs, color: theme.colors.textMuted }} />
-      </div>
+      {hasCaption && (
+        <div className="absolute bottom-0 left-0 right-0"
+          style={{
+            padding: `10cqb ${G.xl} ${G.lg}`,
+            background: `linear-gradient(to top, ${theme.colors.background}F2 0%, ${theme.colors.background}E0 40%, transparent 100%)`,
+          }}>
+          <ETText field="imageCaption" value={content.imageCaption ?? ""} onUpdate={onUpdate} zoneKey={zoneKey} tag="div" accentColor={accentColor}
+            style={{ fontFamily: "monospace", fontSize: F.xs, color: theme.colors.text, textShadow: `0 1px 2px ${theme.colors.background}80` }} />
+        </div>
+      )}
     </div>
   );
 }
@@ -350,7 +363,7 @@ function ChartTextLayout({ theme, content, onUpdate, accentColor, side, zoneId, 
       <div className="col-span-3 h-full">
         <ChartPlaceholder theme={theme} slotId={slotId} type={content.chartType ?? "donut"} label={content.chartLabel ?? ""} zoneKey={zoneKey} />
       </div>
-      <div className="col-span-2 flex flex-col justify-center" style={{ padding: "5cqb 4cqb", gap: "1.5cqb" }}>
+      <div className="col-span-2 flex flex-col justify-center" style={{ padding: P.zone, gap: G.sm }}>
         <ETText field="chartStatLabel" value={content.chartStatLabel ?? ""} onUpdate={onUpdate} zoneKey={zoneKey} tag="div" accentColor={accentColor}
           style={{ fontFamily: "monospace", fontSize: F.xs, color: accentColor, textTransform: "uppercase" }} />
         <ETText field="chartStatValue" value={content.chartStatValue ?? ""} onUpdate={onUpdate} zoneKey={zoneKey} tag="div" accentColor={accentColor}
@@ -364,14 +377,14 @@ function ChartTextLayout({ theme, content, onUpdate, accentColor, side, zoneId, 
 
 function QuoteLayout({ theme, content, onUpdate, accentColor, zoneKey }: LP) {
   return (
-    <div className="w-full h-full flex items-center" style={{ padding: "5cqb 6cqb", gap: "3cqb" }}>
+    <div className="w-full h-full flex items-center" style={{ padding: P.zone, gap: G.lg }}>
       <div className="font-black flex-shrink-0"
         style={{ fontSize: "40cqb", color: accentColor, fontFamily: theme.typography.headingFont, opacity: 0.35, lineHeight: "0.7", marginTop: "-3cqb" }}>
         &ldquo;
       </div>
       <div>
         <ETText field="quoteText" value={content.quoteText ?? ""} onUpdate={onUpdate} zoneKey={zoneKey} tag="div" accentColor={accentColor} multiline richText
-          style={{ fontStyle: "italic", lineHeight: "1.4", fontSize: F.body, color: theme.colors.text, marginBottom: "2cqb" }} />
+          style={{ fontStyle: "italic", lineHeight: "1.4", fontSize: F.body, color: theme.colors.text, marginBottom: G.md }} />
         <ETText field="quoteAttribution" value={content.quoteAttribution ?? ""} onUpdate={onUpdate} zoneKey={zoneKey} tag="div" accentColor={accentColor}
           style={{ fontFamily: "monospace", fontSize: F.xs, color: accentColor }} />
       </div>
@@ -394,21 +407,21 @@ function TimelineLayout({ theme, content }: LP) {
   const steps = content.timelineSteps ?? [];
   const doneCount = steps.filter((s) => s.done).length;
   return (
-    <div className="relative w-full h-full flex items-center" style={{ padding: "4cqb 6cqb" }}>
+    <div className="relative w-full h-full flex items-center" style={{ padding: P.zoneTight }}>
       <div className="absolute font-mono uppercase pointer-events-none"
-        style={{ top: "2cqb", left: "2cqb", fontSize: F.micro, color: theme.colors.accent, letterSpacing: "0.2em" }}>
+        style={{ top: G.md, left: G.md, fontSize: F.micro, color: theme.colors.accent, letterSpacing: "0.2em" }}>
         TIMELINE
       </div>
       <div className="flex flex-1 items-center">
         {steps.map((step, i) => (
           <React.Fragment key={step.date}>
-            <div className="flex flex-col items-center" style={{ gap: "1.5cqb" }}>
+            <div className="flex flex-col items-center" style={{ gap: G.sm }}>
               <div className="font-mono" style={{ fontSize: F.micro, color: theme.colors.textMuted }}>{step.date}</div>
               <div className="flex-shrink-0 flex items-center justify-center"
-                style={{ width: "4cqb", height: "4cqb", borderRadius: "50%",
+                style={{ width: G.xl, height: G.xl, borderRadius: "50%",
                   backgroundColor: step.done ? theme.colors.accent : "transparent",
                   border: `2px solid ${step.done ? theme.colors.accent : theme.colors.border}` }}>
-                {step.done && <div style={{ width: "1.5cqb", height: "1.5cqb", borderRadius: "50%", backgroundColor: theme.colors.background }} />}
+                {step.done && <div style={{ width: G.sm, height: G.sm, borderRadius: "50%", backgroundColor: theme.colors.background }} />}
               </div>
               <div className="text-center leading-tight"
                 style={{ fontSize: F.micro, color: step.done ? theme.colors.text : theme.colors.textMuted, maxWidth: "12cqb" }}>

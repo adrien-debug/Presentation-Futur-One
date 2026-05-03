@@ -21,9 +21,9 @@ interface SegmentedControlProps<T extends string> {
 export default function SegmentedControl<T extends string>({
   options, value, onChange, size = "md", fullWidth = false, accent = "#00D4FF",
 }: SegmentedControlProps<T>) {
-  const h = size === "sm" ? 24 : 28;
-  const px = size === "sm" ? 8 : 12;
-  const fs = size === "sm" ? 9 : 10;
+  const h = size === "sm" ? 26 : 32;
+  const px = size === "sm" ? 10 : 14;
+  const fs = size === "sm" ? 10 : 11;
 
   return (
     <div
@@ -31,12 +31,10 @@ export default function SegmentedControl<T extends string>({
       className={`inline-flex ${fullWidth ? "w-full" : ""}`}
       style={{
         border: "1px solid var(--border-subtle)",
-        backgroundColor: "var(--bg-elevated)",
-        padding: 2,
-        gap: 2,
+        backgroundColor: "transparent",
       }}
     >
-      {options.map((opt) => {
+      {options.map((opt, i) => {
         const active = opt.value === value;
         return (
           <button
@@ -45,18 +43,22 @@ export default function SegmentedControl<T extends string>({
             aria-selected={active}
             title={opt.title ?? opt.label}
             onClick={() => onChange(opt.value)}
-            className="flex items-center justify-center gap-1.5 transition-all flex-1 uppercase font-medium"
+            className="flex items-center justify-center transition-colors flex-1"
             style={{
               height: h,
               padding: `0 ${px}px`,
+              gap: 7,
               fontSize: fs,
-              letterSpacing: "0.08em",
-              color: active ? "#05080F" : "var(--fg-secondary)",
-              backgroundColor: active ? accent : "transparent",
+              fontWeight: active ? 500 : 400,
+              letterSpacing: "-0.005em",
+              color: active ? "var(--fg-primary)" : "var(--fg-secondary)",
+              backgroundColor: active ? "var(--bg-elevated)" : "transparent",
+              borderLeft: i === 0 ? "none" : "1px solid var(--border-subtle)",
+              boxShadow: active ? `inset 0 -1px 0 ${accent}` : "none",
             }}
           >
             {opt.icon}
-            <span>{opt.label}</span>
+            {opt.label && <span>{opt.label}</span>}
           </button>
         );
       })}

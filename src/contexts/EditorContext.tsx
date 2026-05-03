@@ -33,6 +33,15 @@ export interface EditorContextValue {
   hideHeader: boolean;
   hideFooter: boolean;
 
+  // ─── Project meta (consumed by Header/Footer for live values) ───
+  projectName: string;
+  /** Index (0-based) of the currently displayed spread in the ordered page list. */
+  spreadIndex: number;
+  /** Total number of spreads (pages) in the project. */
+  totalSpreads: number;
+  /** Whether the canvas is in print-preview mode (gates CMYK marks, bleed indicators, etc.). */
+  printMode: boolean;
+
   // ─── Selection ───
   selection: UISelection;
   selectZone:     (zoneKey: string) => void;
@@ -81,6 +90,10 @@ const EditorContext = createContext<EditorContextValue>({
   pages: [],
   hideHeader: false,
   hideFooter: false,
+  projectName: "",
+  spreadIndex: 0,
+  totalSpreads: 1,
+  printMode: false,
   selection: { zoneKey: null, slotId: null, kind: null },
   selectZone: noop, selectSlot: noop, clearSelection: noop,
   updateContent: noop, setLayout: noop,

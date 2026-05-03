@@ -40,6 +40,7 @@ interface SmartToolbarProps {
 export default function SmartToolbar(props: SmartToolbarProps) {
   const accent = props.theme.colors.accent;
   const title = MODE_TITLES[props.mode];
+  const meta  = MODE_META[props.mode];
 
   return (
     <aside
@@ -51,12 +52,19 @@ export default function SmartToolbar(props: SmartToolbarProps) {
     >
       {/* Header */}
       <div
-        className="flex items-center justify-between px-3 py-2 border-b flex-shrink-0"
-        style={{ borderColor: "var(--border-subtle)", height: 36 }}
+        className="flex items-baseline justify-between flex-shrink-0"
+        style={{
+          borderBottom: "1px solid var(--border-subtle)",
+          height: 44,
+          padding: "0 16px",
+        }}
       >
-        <span className="text-[9px] font-mono uppercase" style={{ color: accent, letterSpacing: "0.2em" }}>
-          {title}
-        </span>
+        <div className="flex items-baseline" style={{ gap: 10 }}>
+          <span style={{ fontSize: 13, fontWeight: 500, color: "var(--fg-primary)", letterSpacing: "-0.005em" }}>
+            {title}
+          </span>
+          <span style={{ fontSize: 11, color: "var(--fg-muted)" }}>{meta}</span>
+        </div>
       </div>
 
       {/* Mode-specific content */}
@@ -99,4 +107,11 @@ const MODE_TITLES: Record<AppMode, string> = {
   "design-system":  "Style",
   "assets":         "Médias",
   "print-preview":  "Impression",
+};
+
+const MODE_META: Record<AppMode, string> = {
+  "layout":         "Mise en page",
+  "design-system":  "Couleurs & typographie",
+  "assets":         "Images & icônes",
+  "print-preview":  "Aperçu PDF",
 };

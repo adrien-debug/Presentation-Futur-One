@@ -90,12 +90,55 @@ function dbToEditorState(
 
 function LoadingScreen() {
   return (
-    <div className="w-screen flex items-center justify-center" style={{ height: "100dvh", backgroundColor: "var(--bg-app)" }}>
-      <div className="flex flex-col items-center gap-4">
-        <div className="w-10 h-10 flex items-center justify-center text-[12px] font-black"
-          style={{ backgroundColor: "var(--accent)", color: "var(--bg-app)" }}>F1</div>
-        <div className="text-[10px] font-mono uppercase" style={{ color: "var(--fg-muted)", letterSpacing: "0.18em" }}>
-          Chargement…
+    <div
+      className="w-screen flex items-center justify-center"
+      style={{ height: "100dvh", backgroundColor: "var(--bg-app)" }}
+    >
+      <div className="flex flex-col items-center" style={{ gap: 20 }}>
+        <div
+          className="flex items-center justify-center"
+          style={{
+            width: 36,
+            height: 36,
+            border: "1px solid var(--border-strong)",
+            color: "var(--fg-primary)",
+            fontSize: 11,
+            fontWeight: 600,
+            letterSpacing: "0.04em",
+          }}
+        >
+          F1
+        </div>
+        <div
+          aria-hidden
+          style={{
+            position: "relative",
+            width: 96,
+            height: 1,
+            backgroundColor: "var(--border-subtle)",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "40%",
+              backgroundColor: "var(--fg-secondary)",
+              animation: "futur-loading-slide 1.4s ease-in-out infinite",
+            }}
+          />
+        </div>
+        <div
+          className="text-[10px]"
+          style={{
+            color: "var(--fg-muted)",
+            letterSpacing: "0.16em",
+            textTransform: "uppercase",
+            fontWeight: 500,
+          }}
+        >
+          Chargement
         </div>
       </div>
     </div>
@@ -112,6 +155,7 @@ export default function EditorPage() {
 
   // DB load — source of truth
   const [projectLoaded, setProjectLoaded] = useState(false);
+  const [projectName, setProjectName] = useState("");
   // Setup guide: only shown the first time we open a fresh project (computed once at load).
   const [setupGuideActive, setSetupGuideActive] = useState(false);
   useEffect(() => {
@@ -121,6 +165,7 @@ export default function EditorPage() {
       .then(({ project, pages }) => {
         const next = dbToEditorState(project, pages);
         editor.rehydrate(next);
+        setProjectName(project.name ?? "");
         const fresh =
           next.activeThemeId === defaultTheme.id &&
           next.activeFontPresetId === null &&
@@ -219,6 +264,7 @@ export default function EditorPage() {
 
   // ─── Editor context value ─────────────────────────────────────────────────
   const cur = editor.currentPage;
+  const spreadIndex = Math.max(0, editor.state.pageOrder.indexOf(editor.state.currentPageId));
   const editorContextValue = useMemo(() => ({
     contentStore:    cur?.contentStore    ?? {},
     layoutOverrides: cur?.layoutOverrides ?? {},
@@ -230,6 +276,10 @@ export default function EditorPage() {
     pages:           editor.orderedPages,
     hideHeader:      cur?.hideHeader ?? false,
     hideFooter:      cur?.hideFooter ?? false,
+    projectName:     projectName,
+    spreadIndex,
+    totalSpreads:    Math.max(1, editor.orderedPages.length),
+    printMode:       mode === "print-preview",
     selection,
     selectZone, selectSlot, clearSelection,
     updateContent: editor.updateContent,
@@ -254,7 +304,7 @@ export default function EditorPage() {
     activeFontPresetId: editor.state.activeFontPresetId,
     setFontPreset: editor.setFontPreset,
     resetProject: editor.resetProject,
-  }), [cur, editor, selection, selectZone, selectSlot, clearSelection]);
+  }), [cur, editor, selection, selectZone, selectSlot, clearSelection, projectName, spreadIndex, mode]);
 
   const isTextEditing = selection.kind === "text";
   const currentPage   = editor.currentPage;
@@ -271,7 +321,7 @@ export default function EditorPage() {
         <AppShell
           topbar={
             <TopBar
-              projectName={"Mon projet"}
+              projectName={projectName || "Sans titre"}
               pageName={currentPage?.name ?? ""}
               pageIndex={pageIdx >= 0 ? pageIdx : 0}
               totalPages={editor.orderedPages.length}

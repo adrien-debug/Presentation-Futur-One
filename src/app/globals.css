@@ -101,6 +101,7 @@ html, body {
 
 /* ─── Canvas stage ────────────────────────────────────────────────────────── */
 .canvas-stage {
+  position: relative;
   width: 100%;
   height: 100%;
   min-width: 0;
@@ -109,17 +110,39 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: clamp(12px, 2vw, 32px);
-  background:
-    radial-gradient(ellipse at center, #0A1220 0%, #05080F 70%);
+  padding: clamp(16px, 2.5vw, 40px);
+  background-color: #06090F;
+  /* Hairline dot grid + soft vignette — no accent, no glow. */
+  background-image:
+    radial-gradient(rgba(232, 244, 255, 0.035) 1px, transparent 1px),
+    radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+  background-size: 24px 24px, 100% 100%;
+  background-position: 0 0, 0 0;
   container-type: size;
+}
+
+/* Edge falloff — pulls focus to the spread without flashing accent. */
+.canvas-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(to bottom, rgba(5, 8, 15, 0.5) 0%, transparent 18%, transparent 82%, rgba(5, 8, 15, 0.7) 100%),
+    linear-gradient(to right,  rgba(5, 8, 15, 0.4) 0%, transparent 12%, transparent 88%, rgba(5, 8, 15, 0.4) 100%);
 }
 
 .spread-wrapper {
   transform-origin: center center;
   max-width:  100%;
   max-height: 100%;
-  box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+  /* Layered, hairline-bordered elevation — no halo. */
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.05) inset,
+    0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 2px 4px rgba(0, 0, 0, 0.35),
+    0 12px 24px rgba(0, 0, 0, 0.45),
+    0 40px 80px rgba(0, 0, 0, 0.55);
 }
 
 /* ─── Print media query (export) ──────────────────────────────────────────── */
@@ -137,7 +160,7 @@ html, body {
 /* ─── Drag affordances ───────────────────────────────────────────────────── */
 body.dragging-layout [data-zone],
 body.dragging-content [data-zone] {
-  outline: 1px dashed rgba(255, 255, 255, 0.1);
+  outline: 1px solid rgba(232, 244, 255, 0.08);
   outline-offset: -2px;
 }
 
@@ -178,8 +201,14 @@ summary:focus-visible {
 
 /* ─── Sync indicator pulse ────────────────────────────────────────────────── */
 @keyframes futur-sync-pulse {
-  0%, 100% { opacity: 1;   transform: scale(1); }
-  50%      { opacity: 0.4; transform: scale(0.85); }
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.35; }
+}
+
+/* ─── Loading slide bar ───────────────────────────────────────────────────── */
+@keyframes futur-loading-slide {
+  0%   { transform: translateX(-110%); }
+  100% { transform: translateX(260%); }
 }
 
 @media (prefers-reduced-motion: reduce) {

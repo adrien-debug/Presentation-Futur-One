@@ -26,3 +26,24 @@ export const F = {
 } as const;
 
 export type FontToken = keyof typeof F;
+
+/**
+ * Spacing tokens in cqb. Use for padding/gap inside zones to keep a coherent
+ * rhythm across all layouts. All values scale with zone height (container size).
+ */
+export const P = {
+  /** Standard zone padding (image-text, two-col, chart, quote, …). */
+  zone:      "5cqb 6cqb",
+  /** Wider horizontal padding for hero / text-full layouts (more breathing). */
+  zoneWide:  "5cqb 8cqb",
+  /** Tighter vertical padding (timeline, dense overlays). */
+  zoneTight: "4cqb 6cqb",
+} as const;
+
+export const G = {
+  xs: "1cqb",
+  sm: "1.5cqb",
+  md: "2cqb",
+  lg: "3cqb",
+  xl: "4cqb",
+} as const;

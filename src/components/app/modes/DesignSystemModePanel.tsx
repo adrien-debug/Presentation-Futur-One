@@ -31,11 +31,9 @@ export default function DesignSystemModePanel({
   const [tab, setTab] = useState<Tab>("themes");
   const { activeFontPresetId, setFontPreset } = useEditor();
 
-  // Setup guide: track which steps the user has touched (locally — not persisted).
   const [done, setDone] = useState<Record<Step, boolean>>({ themes: false, fonts: false, colors: false });
   const allDone = done.themes && done.fonts && done.colors;
 
-  // Visiting a tab during setup counts as engaging with that step (defaults are valid choices).
   useEffect(() => {
     if (!setupGuideActive) return;
     if (!done[tab as Step]) {
@@ -58,7 +56,7 @@ export default function DesignSystemModePanel({
       )}
 
       {/* Tabs */}
-      <div className="px-3 pt-3 pb-2 flex-shrink-0">
+      <div className="flex-shrink-0" style={{ padding: "12px 16px 8px" }}>
         <SegmentedControl<Tab>
           value={tab}
           onChange={setTab}
@@ -67,17 +65,17 @@ export default function DesignSystemModePanel({
           size="sm"
           options={[
             { value: "themes", label: "Chartes" },
-            { value: "fonts",  label: "Typo" },
+            { value: "fonts",  label: "Typographie" },
             { value: "colors", label: "Couleurs" },
           ]}
         />
       </div>
 
       {/* Content */}
-      <div className="flex-1 scroll-y px-3 pb-4">
+      <div className="flex-1 scroll-y" style={{ padding: "8px 16px 16px" }}>
 
         {tab === "themes" && (
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col" style={{ gap: 6 }}>
             {themeList.map((t) => {
               const active = t.id === activeThemeId;
               return (
@@ -90,29 +88,30 @@ export default function DesignSystemModePanel({
                       if (!done.fonts) setTab("fonts");
                     }
                   }}
-                  className="text-left transition-all"
+                  className="text-left transition-colors"
                   style={{
-                    border: `1px solid ${active ? t.colors.accent : "var(--border-subtle)"}`,
-                    backgroundColor: active ? `${t.colors.accent}10` : "var(--bg-elevated)",
-                    padding: 8,
+                    border: "1px solid var(--border-subtle)",
+                    backgroundColor: active ? "var(--bg-elevated)" : "transparent",
+                    boxShadow: active ? `inset 2px 0 0 ${t.colors.accent}` : "none",
+                    padding: 10,
                   }}
                 >
-                  <div className="flex h-2 mb-2">
+                  <div className="flex" style={{ height: 6, marginBottom: 8, gap: 1 }}>
                     {[t.colors.background, t.colors.surface, t.colors.accent, t.colors.text].map((c, i) => (
                       <div key={i} className="flex-1" style={{ backgroundColor: c }} />
                     ))}
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-semibold uppercase" style={{ color: active ? t.colors.accent : "var(--fg-primary)", letterSpacing: "0.1em" }}>
+                  <div className="flex items-baseline justify-between">
+                    <span style={{ fontSize: 12, fontWeight: 500, color: "var(--fg-primary)", letterSpacing: "-0.005em" }}>
                       {t.name}
                     </span>
                     {active && (
-                      <span className="text-[7px] font-mono" style={{ color: t.colors.accent, letterSpacing: "0.16em" }}>
-                        ACTIF
+                      <span style={{ fontSize: 10, color: t.colors.accent, fontWeight: 500 }}>
+                        Actif
                       </span>
                     )}
                   </div>
-                  <div className="text-[8px] mt-1" style={{ color: "var(--fg-muted)" }}>
+                  <div style={{ fontSize: 11, color: "var(--fg-muted)", marginTop: 3 }}>
                     {t.tagline}
                   </div>
                 </button>
@@ -122,7 +121,7 @@ export default function DesignSystemModePanel({
         )}
 
         {tab === "fonts" && (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col" style={{ gap: 4 }}>
             {FONT_PRESETS.map((fp) => {
               const active = (activeFontPresetId ?? "theme-default") === fp.id;
               return (
@@ -135,16 +134,18 @@ export default function DesignSystemModePanel({
                       if (!done.colors) setTab("colors");
                     }
                   }}
-                  className="text-left px-2 py-2 transition-all"
+                  className="text-left transition-colors"
                   style={{
-                    border: `1px solid ${active ? `${accent}80` : "var(--border-subtle)"}`,
-                    backgroundColor: active ? `${accent}10` : "var(--bg-elevated)",
+                    padding: "10px 12px",
+                    border: "1px solid var(--border-subtle)",
+                    backgroundColor: active ? "var(--bg-elevated)" : "transparent",
+                    boxShadow: active ? `inset 2px 0 0 ${accent}` : "none",
                   }}
                 >
-                  <div className="text-[10px] font-semibold" style={{ color: active ? accent : "var(--fg-primary)" }}>
+                  <div style={{ fontSize: 12, fontWeight: 500, color: "var(--fg-primary)", letterSpacing: "-0.005em" }}>
                     {fp.name}
                   </div>
-                  <div className="text-[8px] mt-0.5" style={{ color: "var(--fg-muted)" }}>{fp.description}</div>
+                  <div style={{ fontSize: 11, color: "var(--fg-muted)", marginTop: 3 }}>{fp.description}</div>
                 </button>
               );
             })}
@@ -168,19 +169,19 @@ export default function DesignSystemModePanel({
   );
 }
 
-// ─── Compact color overrides ───────────────────────────────────────────────────
+// ─── Color overrides ─────────────────────────────────────────────────────────
 
 const COLOR_KEYS: { key: ColorKey; label: string }[] = [
-  { key: "background", label: "Background" },
+  { key: "background", label: "Fond" },
   { key: "surface",    label: "Surface" },
-  { key: "surfaceAlt", label: "Surface Alt" },
-  { key: "primary",    label: "Primary" },
-  { key: "secondary",  label: "Secondary" },
+  { key: "surfaceAlt", label: "Surface alt." },
+  { key: "primary",    label: "Primaire" },
+  { key: "secondary",  label: "Secondaire" },
   { key: "accent",     label: "Accent" },
-  { key: "highlight",  label: "Highlight" },
-  { key: "text",       label: "Text" },
-  { key: "textMuted",  label: "Text Muted" },
-  { key: "border",     label: "Border" },
+  { key: "highlight",  label: "Surlignage" },
+  { key: "text",       label: "Texte" },
+  { key: "textMuted",  label: "Texte atténué" },
+  { key: "border",     label: "Bordure" },
 ];
 
 function ColorOverrides({
@@ -195,13 +196,20 @@ function ColorOverrides({
   const hasOverrides = Object.keys(overrides).length > 0;
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="flex flex-col" style={{ gap: 4 }}>
       {COLOR_KEYS.map(({ key, label }) => {
         const current = overrides[key] ?? theme.colors[key];
         const overridden = overrides[key] !== undefined;
         return (
-          <div key={key} className="flex items-center gap-2 px-2 py-1.5"
-            style={{ border: "1px solid var(--border-subtle)", backgroundColor: "var(--bg-elevated)" }}
+          <div
+            key={key}
+            className="flex items-center"
+            style={{
+              gap: 10,
+              padding: "6px 10px",
+              border: "1px solid var(--border-subtle)",
+              boxShadow: overridden ? `inset 2px 0 0 ${accent}` : "none",
+            }}
           >
             <input
               type="color"
@@ -211,8 +219,10 @@ function ColorOverrides({
               style={{ width: 24, height: 22, background: "transparent", border: "1px solid var(--border-subtle)", padding: 0 }}
             />
             <div className="flex-1 min-w-0">
-              <div className="text-[10px]" style={{ color: overridden ? accent : "var(--fg-primary)" }}>{label}</div>
-              <div className="text-[8px] font-mono" style={{ color: "var(--fg-muted)" }}>{current.toUpperCase()}</div>
+              <div style={{ fontSize: 12, color: "var(--fg-primary)", letterSpacing: "-0.005em" }}>{label}</div>
+              <div style={{ fontSize: 11, color: "var(--fg-muted)", fontVariantNumeric: "tabular-nums" }}>
+                {current.toUpperCase()}
+              </div>
             </div>
           </div>
         );
@@ -220,10 +230,19 @@ function ColorOverrides({
       {hasOverrides && (
         <button
           onClick={onResetAll}
-          className="mt-2 py-1.5 text-[9px] uppercase font-medium transition-all"
-          style={{ border: "1px solid #5A2A2A", color: "#E07070", letterSpacing: "0.1em", backgroundColor: "transparent" }}
+          className="transition-colors"
+          style={{
+            marginTop: 6,
+            height: 30,
+            border: "1px solid var(--border-subtle)",
+            color: "#E07070",
+            backgroundColor: "transparent",
+            fontSize: 11,
+            fontWeight: 500,
+            letterSpacing: "-0.005em",
+          }}
         >
-          Réinitialiser toutes les couleurs
+          Réinitialiser les couleurs
         </button>
       )}
     </div>
@@ -250,13 +269,20 @@ function SetupGuide({
 }) {
   return (
     <div
-      className="px-3 pt-3 pb-3 flex-shrink-0 border-b"
-      style={{ borderColor: "var(--border-subtle)", backgroundColor: `${accent}08` }}
+      className="flex-shrink-0"
+      style={{
+        borderBottom: "1px solid var(--border-subtle)",
+        backgroundColor: "var(--bg-elevated)",
+        padding: "12px 16px",
+      }}
     >
-      <div className="text-[8px] font-mono uppercase mb-2" style={{ color: accent, letterSpacing: "0.18em" }}>
-        Configurer ton projet
+      <div style={{ fontSize: 11, fontWeight: 500, color: "var(--fg-primary)", marginBottom: 2, letterSpacing: "-0.005em" }}>
+        Configurer le projet
       </div>
-      <div className="flex items-center gap-1.5 mb-2">
+      <div style={{ fontSize: 11, color: "var(--fg-muted)", marginBottom: 10 }}>
+        Trois étapes pour définir l'identité visuelle.
+      </div>
+      <div className="flex items-center" style={{ gap: 6, marginBottom: 10 }}>
         {STEPS.map((s, i) => {
           const isActive = activeStep === s.id;
           const isDone = done[s.id];
@@ -264,31 +290,43 @@ function SetupGuide({
             <React.Fragment key={s.id}>
               <button
                 onClick={() => onJump(s.id)}
-                className="flex items-center gap-1.5 px-2 py-1 transition-all flex-1 min-w-0"
+                className="flex items-center transition-colors flex-1 min-w-0"
                 style={{
-                  border: `1px solid ${isActive ? accent : isDone ? `${accent}40` : "var(--border-subtle)"}`,
-                  backgroundColor: isActive ? `${accent}15` : "var(--bg-elevated)",
+                  gap: 8,
+                  padding: "6px 8px",
+                  border: "1px solid var(--border-subtle)",
+                  backgroundColor: isActive ? "var(--bg-panel)" : "transparent",
+                  boxShadow: isActive ? `inset 2px 0 0 ${accent}` : "none",
                 }}
               >
                 <span
-                  className="w-3.5 h-3.5 flex items-center justify-center text-[8px] font-mono flex-shrink-0"
+                  className="flex items-center justify-center flex-shrink-0"
                   style={{
+                    width: 14,
+                    height: 14,
+                    fontSize: 9,
+                    fontVariantNumeric: "tabular-nums",
                     backgroundColor: isDone ? accent : "transparent",
-                    border: `1px solid ${isDone ? accent : "var(--border-subtle)"}`,
+                    border: `1px solid ${isDone ? accent : "var(--border-strong)"}`,
                     color: isDone ? "var(--bg-app)" : "var(--fg-muted)",
                   }}
                 >
                   {isDone ? "✓" : i + 1}
                 </span>
                 <span
-                  className="text-[9px] font-semibold uppercase truncate"
-                  style={{ color: isActive ? accent : "var(--fg-primary)", letterSpacing: "0.08em" }}
+                  className="truncate"
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 500,
+                    color: isActive ? "var(--fg-primary)" : "var(--fg-secondary)",
+                    letterSpacing: "-0.005em",
+                  }}
                 >
                   {s.label}
                 </span>
               </button>
               {i < STEPS.length - 1 && (
-                <span style={{ color: "var(--fg-muted)", fontSize: 10 }}>→</span>
+                <span aria-hidden style={{ color: "var(--border-strong)", fontSize: 10 }}>→</span>
               )}
             </React.Fragment>
           );
@@ -297,16 +335,32 @@ function SetupGuide({
       {allDone ? (
         <button
           onClick={onFinish}
-          className="w-full py-2 text-[10px] font-bold uppercase transition-all"
-          style={{ backgroundColor: accent, color: "var(--bg-app)", letterSpacing: "0.12em" }}
+          className="w-full transition-colors"
+          style={{
+            height: 32,
+            backgroundColor: accent,
+            color: "var(--bg-app)",
+            border: `1px solid ${accent}`,
+            fontSize: 12,
+            fontWeight: 600,
+            letterSpacing: "-0.005em",
+          }}
         >
-          Commencer à éditer →
+          Commencer à éditer
         </button>
       ) : (
         <button
           onClick={onFinish}
-          className="w-full py-1.5 text-[9px] uppercase transition-all"
-          style={{ color: "var(--fg-muted)", border: "1px dashed var(--border-subtle)", letterSpacing: "0.1em" }}
+          className="w-full transition-colors"
+          style={{
+            height: 28,
+            color: "var(--fg-muted)",
+            border: "1px solid var(--border-subtle)",
+            backgroundColor: "transparent",
+            fontSize: 11,
+            fontWeight: 500,
+            letterSpacing: "-0.005em",
+          }}
         >
           Passer cette étape
         </button>

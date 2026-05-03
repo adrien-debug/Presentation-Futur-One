@@ -5,25 +5,31 @@ import { ArtDirection } from "@/design-system";
 import { F } from "@/utils/cqb";
 import { useEditor } from "@/contexts/EditorContext";
 
+// CMYK marks are print-only metadata. We hide them by default to avoid
+// noise on the editor canvas; PrintPreview mode flips this on via context.
+
 interface FooterProps {
   theme: ArtDirection;
   side: "left" | "right";
   showGrid?: boolean;
-  pageNumber?: number;
-  totalPages?: number;
+  /** 0-based spread index in the project. Drives 01/04, 02/04, … numbering. */
+  spreadIndex?: number;
+  /** Total number of spreads (each spread = 2 sides). */
+  totalSpreads?: number;
   classification?: string;
   website?: string;
 }
 
 export default function Footer({
   theme, side, showGrid = false,
-  pageNumber = 1, totalPages = 2,
+  spreadIndex = 0, totalSpreads = 1,
   classification = "CONFIDENTIEL — USAGE INTERNE",
   website = "www.futuroone.qa",
 }: FooterProps) {
   const isLeft = side === "left";
-  const currentPage = isLeft ? pageNumber : pageNumber + 1;
-  const { selectZone, selection } = useEditor();
+  const totalSides = Math.max(2, totalSpreads * 2);
+  const currentPage = spreadIndex * 2 + (isLeft ? 1 : 2);
+  const { selectZone, selection, printMode } = useEditor();
   const key = `${side}-footer`;
   const isSelected = selection.zoneKey === key;
 
@@ -46,13 +52,13 @@ export default function Footer({
           </div>
           <div className="flex items-center" style={{ gap: "4cqb" }}>
             <div className="font-mono" style={{ fontSize: F.small, color: theme.colors.textMuted }}>{website}</div>
-            <PageDots current={currentPage} total={totalPages * 2} theme={theme} />
+            <PageDots current={currentPage} total={totalSides} theme={theme} />
           </div>
         </>
       ) : (
         <>
           <div className="flex items-center" style={{ gap: "4cqb" }}>
-            <PageDots current={currentPage} total={totalPages * 2} theme={theme} />
+            <PageDots current={currentPage} total={totalSides} theme={theme} />
             <div className="font-mono" style={{ fontSize: F.small, color: theme.colors.textMuted }}>{website}</div>
           </div>
           <div className="flex items-center" style={{ gap: "2cqb" }}>
@@ -64,18 +70,20 @@ export default function Footer({
         </>
       )}
 
-      {/* CMYK print metadata */}
-      <div
-        className="absolute bottom-0 font-mono"
-        style={{
-          [isLeft ? "left" : "right"]: "2cqb",
-          fontSize: F.micro,
-          opacity: 0.3,
-          color: theme.colors.textMuted,
-        }}
-      >
-        {isLeft ? `PRIMARY ${theme.colors.cmyk.primary}` : `ACCENT ${theme.colors.cmyk.accent}`}
-      </div>
+      {/* CMYK print metadata — only shown in print-preview mode */}
+      {printMode && (
+        <div
+          className="absolute bottom-0 font-mono"
+          style={{
+            [isLeft ? "left" : "right"]: "2cqb",
+            fontSize: F.micro,
+            opacity: 0.3,
+            color: theme.colors.textMuted,
+          }}
+        >
+          {isLeft ? `PRIMARY ${theme.colors.cmyk.primary}` : `ACCENT ${theme.colors.cmyk.accent}`}
+        </div>
+      )}
 
       {showGrid && (
         <div className="absolute inset-0 flex items-start justify-center pointer-events-none" style={{ paddingTop: "1cqb", color: `${theme.colors.accent}55`, fontSize: F.micro, fontFamily: "monospace" }}>

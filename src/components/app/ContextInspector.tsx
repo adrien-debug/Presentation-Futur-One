@@ -36,26 +36,36 @@ export default function ContextInspector({ theme }: Props) {
       }}
     >
       <div
-        className="flex items-center justify-between px-3 py-2 border-b flex-shrink-0"
-        style={{ borderColor: "var(--border-subtle)", height: 36 }}
+        className="flex items-center justify-between flex-shrink-0"
+        style={{
+          borderBottom: "1px solid var(--border-subtle)",
+          height: 44,
+          padding: "0 16px",
+        }}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center" style={{ gap: 10 }}>
           <span
-            className="w-1.5 h-1.5 rounded-full"
-            style={{ backgroundColor: accent, boxShadow: `0 0 6px ${accent}` }}
+            aria-hidden
+            style={{ width: 5, height: 5, borderRadius: "50%", backgroundColor: accent }}
           />
-          <span className="text-[9px] font-mono uppercase" style={{ color: accent, letterSpacing: "0.2em" }}>
-            Inspector · {label}
+          <span style={{ fontSize: 13, fontWeight: 500, color: "var(--fg-primary)", letterSpacing: "-0.005em" }}>
+            Inspecteur
           </span>
+          <span style={{ fontSize: 11, color: "var(--fg-muted)" }}>{label}</span>
         </div>
         <button
           onClick={clearSelection}
           aria-label="Désélectionner"
           title="Fermer (Esc)"
-          className="w-5 h-5 flex items-center justify-center transition-colors"
-          style={{ color: "var(--fg-secondary)" }}
+          className="flex items-center justify-center transition-colors"
+          style={{
+            width: 22,
+            height: 22,
+            color: "var(--fg-muted)",
+            border: "1px solid var(--border-subtle)",
+          }}
         >
-          <IconClose size={11} />
+          <IconClose size={10} />
         </button>
       </div>
 
