@@ -34,7 +34,6 @@ export default function Panel({
           background: bg,
           position: "relative",
           overflow: "hidden",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.4)",
           color: "inherit",
         }}
       >

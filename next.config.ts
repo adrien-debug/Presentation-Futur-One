@@ -11,6 +11,13 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "**.r2.dev" },
       { protocol: "https", hostname: "**.supabase.co" },
     ],
+    // ── Print assets : zero compression. ──────────────────────────────────
+    // - `unoptimized: true` désactive globalement la moulinette next/image
+    //   (sharp/squoosh) qui ré-encode et baisse la qualité par défaut.
+    // - Les fichiers de /public/ sont dans tous les cas servis tels quels
+    //   par Next quand on les utilise via <img src> ou backgroundImage CSS,
+    //   pas via next/image — donc 100% des octets d'origine sont livrés.
+    unoptimized: true,
   },
 };
 
